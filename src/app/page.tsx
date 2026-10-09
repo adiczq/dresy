@@ -3,6 +3,8 @@ import OrderForm from "@/components/OrderForm";
 import SizeAdvisor, { type SizeRecommendation } from "@/components/SizeAdvisor";
 import { useState } from "react";
 import { ArrowRight, Check, Shirt, ShoppingBag, Wind } from "lucide-react";
+import Image from "next/image";
+import ProductGallery from "@/components/ProductGallery";
 
 type ProductId = "tracksuit" | "jacket";
 
@@ -30,6 +32,7 @@ const products = [
 ];
 
 export default function Home() {
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [selected, setSelected] = useState<ProductId[]>(["tracksuit"]);
   const [recommendation, setRecommendation] = useState<SizeRecommendation>({
     top: null,
@@ -172,87 +175,128 @@ export default function Home() {
           {products.map((product) => {
             const Icon = product.icon;
             const active = selected.includes(product.id);
+            const isTracksuit = product.id === "tracksuit";
 
             return (
-              <button
-                key={product.id}
-                type="button"
-                onClick={() => toggleProduct(product.id)}
-                aria-pressed={active}
-                className={`group overflow-hidden rounded-3xl border text-left transition-all duration-200 ${
-                  active
-                    ? "border-club-accent bg-club-elevated"
-                    : "bg-club-elevated border-white/10 hover:border-white/30"
-                }`}
-              >
-                <div className="bg-club-surface relative flex h-64 items-center justify-center overflow-hidden border-b border-white/10">
-                  <div className="absolute top-6 left-6 text-sm font-bold tracking-widest text-white/35">
-                    {product.number} / JOMA
+              <div key={product.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => toggleProduct(product.id)}
+                  aria-pressed={active}
+                  className={`block h-full w-full overflow-hidden rounded-3xl border text-left transition-all duration-200 ${
+                    active
+                      ? "border-club-accent bg-club-elevated"
+                      : "bg-club-elevated border-white/10 hover:border-white/30"
+                  }`}
+                >
+                  {/* ZDJĘCIE PRODUKTU */}
+                  <div className="bg-club-surface relative flex h-64 items-center justify-center overflow-hidden border-b border-white/10">
+                    {/* NUMER PRODUKTU */}
+                    <div className="absolute top-6 left-6 z-10 text-sm font-bold tracking-widest text-white/35">
+                      {product.number} / JOMA
+                    </div>
+
+                    {/* ZAZNACZENIE */}
+                    <div className="absolute top-6 right-6 z-10">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all ${
+                          active
+                            ? "border-club-primary bg-club-primary text-white"
+                            : "border-club-accent/70 bg-club-accent/10 text-club-accent"
+                        }`}
+                      >
+                        {active ? <Check size={19} /> : null}
+                      </div>
+                    </div>
+
+                    {/* DRES — PRAWDZIWE ZDJĘCIE */}
+                    {isTracksuit ? (
+                      <Image
+                        src="/images/joma-academy-iv_1.png"
+                        alt="Joma Academy IV 101966.703 — niebiesko-granatowy komplet dresowy"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <>
+                        {/* KURTKA — NA RAZIE IKONA */}
+                        <div className="bg-club-accent/5 flex h-40 w-40 items-center justify-center rounded-full">
+                          <Icon
+                            size={112}
+                            strokeWidth={1}
+                            className="text-club-accent/80 transition-transform duration-300 group-hover:scale-110"
+                          />
+                        </div>
+
+                        <span className="absolute bottom-5 left-6 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-[10px] font-bold tracking-widest text-white/60 uppercase">
+                          Zdjęcie produktu wkrótce
+                        </span>
+                      </>
+                    )}
                   </div>
 
-                  <div className="absolute top-6 right-6">
-                    <div
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border ${
-                        active
-                          ? "border-club-accent bg-club-primary text-club-on-primary"
-                          : "border-white/25 text-white/40"
-                      }`}
-                    >
-                      {active ? <Check size={19} /> : null}
+                  {/* INFORMACJE O PRODUKCIE */}
+                  <div className="p-7">
+                    <p className="text-club-accent text-xs font-bold tracking-[0.2em]">
+                      {product.model}
+                    </p>
+
+                    <h3 className="mt-3 text-2xl font-black">{product.name}</h3>
+
+                    <p className="mt-3 min-h-14 text-sm leading-6 text-white/50">
+                      {product.description}
+                    </p>
+
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {product.items.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/65"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-7 flex items-center justify-between border-t border-white/10 pt-6">
+                      <span
+                        className={`text-sm font-bold ${
+                          active ? "text-club-accent" : "text-white/75"
+                        }`}
+                      >
+                        {active ? "Wybrano produkt" : "Wybierz produkt"}
+                      </span>
+
+                      <ArrowRight
+                        size={18}
+                        className={
+                          active ? "text-club-accent" : "text-white/50"
+                        }
+                      />
                     </div>
                   </div>
+                </button>
 
-                  <div className="bg-club-accent/5 flex h-40 w-40 items-center justify-center rounded-full">
-                    <Icon
-                      size={112}
-                      strokeWidth={1}
-                      className="text-club-accent/80 transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </div>
-
-                  <span className="absolute bottom-5 left-6 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-[10px] font-bold tracking-widest text-white/60 uppercase">
-                    Zdjęcie produktu wkrótce
-                  </span>
-                </div>
-
-                <div className="p-7">
-                  <p className="text-club-accent text-xs font-bold tracking-[0.2em]">
-                    {product.model}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-black">{product.name}</h3>
-                  <p className="mt-3 min-h-14 text-sm leading-6 text-white/50">
-                    {product.description}
-                  </p>
-
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {product.items.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/65"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-7 flex items-center justify-between border-t border-white/10 pt-6">
-                    <span
-                      className={`text-sm font-bold ${
-                        active ? "text-club-accent" : "text-white/75"
-                      }`}
-                    >
-                      {active ? "Wybrano produkt" : "Wybierz produkt"}
-                    </span>
-                    <ArrowRight
-                      size={18}
-                      className={active ? "text-club-accent" : "text-white/50"}
-                    />
-                  </div>
-                </div>
-              </button>
+                {/* OSOBNY PRZYCISK GALERII */}
+                {isTracksuit && (
+                  <button
+                    type="button"
+                    onClick={() => setGalleryOpen(true)}
+                    className="border-club-accent/40 bg-club-bg/95 text-club-accent hover:bg-club-surface absolute top-52 right-5 z-20 rounded-full border px-4 py-2 text-xs font-bold shadow-lg transition"
+                  >
+                    Zobacz 6 zdjęć
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
+
+        {/* OKNO GALERII */}
+        {galleryOpen && (
+          <ProductGallery onClose={() => setGalleryOpen(false)} />
+        )}
       </section>
       <SizeAdvisor onRecommendationChange={setRecommendation} />
 
