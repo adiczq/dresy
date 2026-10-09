@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
+import { checkOrderRateLimit } from "@/lib/order-rate-limit";
 
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
@@ -68,11 +69,13 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get("origin");
 
     const allowedOrigins = [
-      "http://localhost:3000",
       process.env.APP_ORIGIN?.trim().replace(/\/$/, ""),
-    ].filter(Boolean);
+      ...(process.env.NODE_ENV !== "production"
+        ? ["http://localhost:3000"]
+        : []),
+    ].filter((value): value is string => Boolean(value));
 
-    if (origin && !allowedOrigins.includes(origin)) {
+    if (!origin || !allowedOrigins.includes(origin)) {
       return NextResponse.json(
         { error: "Niedozwolone pochodzenie żądania." },
         { status: 403 },
@@ -129,6 +132,29 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // Ograniczamy liczbę poprawnych zgłoszeń z jednego IP.
+    const rateLimit = await checkOrderRateLimit(request);
+
+    if (!rateLimit.allowed) {
+      const minutes = Math.ceil(rateLimit.retryAfterSeconds / 60);
+
+      return NextResponse.json(
+        {
+          error:
+            `Przekroczono limit zamówień. ` +
+            `Spróbuj ponownie za około ${minutes} min.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+            "Cache-Control": "no-store",
+          },
+        },
+      );
+    }
+
     // Losowy token do przyszłej edycji zamówienia.
     const editToken = randomBytes(32).toString("base64url");
 
