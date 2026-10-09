@@ -1,0 +1,147 @@
+import { CheckCircle2, Copy } from "lucide-react";
+
+import { getPlayerInitials } from "@/lib/initials";
+import type { OrderPlayer } from "./types";
+
+type Props = {
+  reference: string;
+  players: OrderPlayer[];
+  parentName: string;
+  copyStatus: string;
+  setCopyStatus: (status: string) => void;
+};
+
+export default function OrderConfirmation({
+  reference,
+  players,
+  parentName,
+  copyStatus,
+  setCopyStatus,
+}: Props) {
+  const confirmation = [
+    "GÓRNIK RADLIN — ZGŁOSZENIE ZAPISANE",
+    `Numer: ${reference}`,
+    `Opiekun: ${parentName}`,
+
+    ...players.flatMap((player, index) => [
+      "",
+      `Zawodnik ${index + 1}: ${player.playerName}`,
+      `Grupa: ${player.group}`,
+      `Inicjały: ${
+        player.noInitials
+          ? "Bez inicjałów"
+          : getPlayerInitials(player.playerName)
+      }`,
+
+      ...player.items.map(
+        (item) =>
+          `${
+            item.productId === "tracksuit" ? "Dres Academy IV" : "Kurtka"
+          }: ${item.size}`,
+      ),
+    ]),
+
+    "",
+    "Status: zgłoszenie zapisane.",
+  ].join("\n");
+
+  return (
+    <section
+      id="zamowienie"
+      className="border-y border-white/10 bg-club-bg px-5 py-20"
+    >
+      <div className="mx-auto max-w-xl rounded-3xl border border-club-accent/20 bg-club-surface p-6 text-center md:p-10">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-club-primary text-club-on-primary">
+          <CheckCircle2 size={42} strokeWidth={2} />
+        </div>
+
+        <h2 className="mt-6 text-2xl font-black uppercase md:text-3xl">
+          Zgłoszenie zapisane!
+        </h2>
+
+        <p className="mt-3 text-sm leading-7 text-white/55">
+          Wszystkie wybrane produkty trafiły na listę klubową.
+        </p>
+
+        <div className="mt-8 rounded-2xl border border-club-accent/25 bg-club-accent/10 p-6">
+          <p className="text-xs font-bold tracking-widest text-club-accent uppercase">
+            Numer zgłoszenia
+          </p>
+
+          <p className="mt-3 text-2xl font-black break-all md:text-3xl">
+            {reference}
+          </p>
+        </div>
+
+        <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-club-bg p-5 text-left text-sm">
+          {players.map((player, index) => (
+            <div
+              key={index}
+              className="space-y-2 border-b border-white/10 pb-4 last:border-0 last:pb-0"
+            >
+              <p className="font-bold">{player.playerName}</p>
+
+              <p className="text-white/55">
+                {player.group} ·{" "}
+                {player.noInitials
+                  ? "Bez inicjałów"
+                  : getPlayerInitials(player.playerName)}
+              </p>
+
+              {player.items.map((item) => (
+                <div
+                  key={item.productId}
+                  className="flex justify-between gap-3"
+                >
+                  <span className="text-white/65">
+                    {item.productId === "tracksuit"
+                      ? "Dres Academy IV"
+                      : "Kurtka"}
+                  </span>
+
+                  <span className="font-bold text-club-accent">{item.size}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          <p className="text-xs text-white/55">Opiekun: {parentName}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(confirmation);
+              setCopyStatus("Potwierdzenie skopiowane.");
+            } catch {
+              setCopyStatus("Nie udało się skopiować potwierdzenia.");
+            }
+          }}
+          className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-club-primary px-6 py-4 text-sm font-extrabold text-club-on-primary hover:bg-club-primary-hover"
+        >
+          <Copy size={18} />
+          Kopiuj potwierdzenie
+        </button>
+
+        {copyStatus && (
+          <p role="status" className="mt-3 text-xs text-white/60">
+            {copyStatus}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 w-full rounded-xl border border-white/15 px-6 py-4 text-sm font-semibold hover:bg-white/5"
+        >
+          Dodaj kolejne zgłoszenie
+        </button>
+
+        <p className="mt-6 text-xs leading-6 text-white/40">
+          Zachowaj numer zgłoszenia. Edycję dodamy w kolejnym etapie.
+        </p>
+      </div>
+    </section>
+  );
+}

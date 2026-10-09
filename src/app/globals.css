@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* =====================================
+   GÓRNIK RADLIN — MOTYW APLIKACJI
+   ===================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Tła */
+  --club-bg: #081523;
+  --club-surface: #11263d;
+  --club-elevated: #0c1e31;
+
+  /* Kolory klubowe */
+  --club-primary: #3b82f6;
+  --club-primary-hover: #60a5fa;
+  --club-accent: #60a5fa;
+
+  /* Tekst */
+  --club-text: #f8fafc;
+  --club-muted: #a8bdd5;
+
+  /* Tekst na niebieskich przyciskach */
+  --club-on-primary: #081523;
+
+  /* Kolory systemowe */
+  --club-success: #4ade80;
+  --club-danger: #f87171;
+  --club-warning: #fcd34d;
+
+  /* Domyślny motyw Next.js */
+  --background: var(--club-bg);
+  --foreground: var(--club-text);
+}
+
+/* =====================================
+   TAILWIND CSS 4
+   ===================================== */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-club-bg: var(--club-bg);
+  --color-club-surface: var(--club-surface);
+  --color-club-elevated: var(--club-elevated);
+
+  --color-club-primary: var(--club-primary);
+  --color-club-primary-hover: var(--club-primary-hover);
+  --color-club-accent: var(--club-accent);
+
+  --color-club-text: var(--club-text);
+  --color-club-muted: var(--club-muted);
+  --color-club-on-primary: var(--club-on-primary);
+
+  --color-club-success: var(--club-success);
+  --color-club-danger: var(--club-danger);
+  --color-club-warning: var(--club-warning);
+}
+
+/* =====================================
+   GLOBALNE USTAWIENIA
+   ===================================== */
+
+body {
+  background: var(--club-bg);
+  color: var(--club-text);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* =====================================
+   AUTOUZUPEŁNIANIE CHROME
+   ===================================== */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--club-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--club-bg) inset !important;
+
+  -webkit-text-fill-color: var(--club-text) !important;
+  caret-color: var(--club-text);
+}
