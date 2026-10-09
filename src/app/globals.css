@@ -86,3 +86,13 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--club-text) !important;
   caret-color: var(--club-text);
 }
+
+/* =====================================
+   PŁYNNE PRZEWIJANIE STRONY
+   ===================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
