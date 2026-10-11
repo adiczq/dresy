@@ -32,7 +32,7 @@ const products = [
 ];
 
 export default function Home() {
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryProduct, setGalleryProduct] = useState<ProductId | null>(null);
   const [selected, setSelected] = useState<ProductId[]>(["tracksuit"]);
   const [recommendation, setRecommendation] = useState<SizeRecommendation>({
     top: null,
@@ -123,11 +123,14 @@ export default function Home() {
               TEAMWEAR / 2026
             </div>
 
-            <div className="border-club-accent/20 bg-club-accent/5 relative flex h-56 w-56 items-center justify-center rounded-full border md:h-72 md:w-72">
-              <div className="border-club-accent/25 absolute inset-5 rounded-full border border-dashed" />
-              <Shirt
-                className="text-club-accent relative h-32 w-32 md:h-40 md:w-40"
-                strokeWidth={1}
+            <div className="relative h-64 w-full md:h-[350px]">
+              <Image
+                src="/images/joma-shirt.png"
+                alt="Niebieska koszulka treningowa Joma"
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
               />
             </div>
 
@@ -173,7 +176,6 @@ export default function Home() {
 
         <div className="grid gap-5 md:grid-cols-2">
           {products.map((product) => {
-            const Icon = product.icon;
             const active = selected.includes(product.id);
             const isTracksuit = product.id === "tracksuit";
 
@@ -210,30 +212,22 @@ export default function Home() {
                     </div>
 
                     {/* DRES — PRAWDZIWE ZDJĘCIE */}
-                    {isTracksuit ? (
-                      <Image
-                        src="/images/joma-academy-iv_1.png"
-                        alt="Joma Academy IV 101966.703 — niebiesko-granatowy komplet dresowy"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <>
-                        {/* KURTKA — NA RAZIE IKONA */}
-                        <div className="bg-club-accent/5 flex h-40 w-40 items-center justify-center rounded-full">
-                          <Icon
-                            size={112}
-                            strokeWidth={1}
-                            className="text-club-accent/80 transition-transform duration-300 group-hover:scale-110"
-                          />
-                        </div>
 
-                        <span className="absolute bottom-5 left-6 rounded-full border border-white/15 bg-black/20 px-3 py-1.5 text-[10px] font-bold tracking-widest text-white/60 uppercase">
-                          Zdjęcie produktu wkrótce
-                        </span>
-                      </>
-                    )}
+                    <Image
+                      src={
+                        isTracksuit
+                          ? "/images/joma-academy-iv_1.png"
+                          : "/images/105301.700_1.png"
+                      }
+                      alt={
+                        isTracksuit
+                          ? "Joma Academy IV — komplet dresowy"
+                          : "Joma 105301.700 — niebieska kurtka treningowa"
+                      }
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                    />
                   </div>
 
                   {/* INFORMACJE O PRODUKCIE */}
@@ -279,23 +273,26 @@ export default function Home() {
                 </button>
 
                 {/* OSOBNY PRZYCISK GALERII */}
-                {isTracksuit && (
-                  <button
-                    type="button"
-                    onClick={() => setGalleryOpen(true)}
-                    className="border-club-accent/40 bg-club-bg/95 text-club-accent hover:bg-club-surface absolute top-52 right-5 z-20 rounded-full border px-4 py-2 text-xs font-bold shadow-lg transition"
-                  >
-                    Zobacz 6 zdjęć
-                  </button>
-                )}
+
+                <button
+                  type="button"
+                  onClick={() => setGalleryProduct(product.id)}
+                  className="border-club-accent/40 bg-club-bg/95 text-club-accent hover:bg-club-surface absolute top-52 right-5 z-20 rounded-full border px-4 py-2 text-xs font-bold shadow-lg transition"
+                >
+                  Zobacz {isTracksuit ? 6 : 5} zdjęć
+                </button>
               </div>
             );
           })}
         </div>
 
         {/* OKNO GALERII */}
-        {galleryOpen && (
-          <ProductGallery onClose={() => setGalleryOpen(false)} />
+
+        {galleryProduct && (
+          <ProductGallery
+            product={galleryProduct}
+            onClose={() => setGalleryProduct(null)}
+          />
         )}
       </section>
       <SizeAdvisor onRecommendationChange={setRecommendation} />

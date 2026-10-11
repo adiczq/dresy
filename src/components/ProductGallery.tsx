@@ -4,20 +4,40 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-const photos = [
-  "/images/joma-academy-iv_1.png",
-  "/images/joma-academy-iv_2.png",
-  "/images/joma-academy-iv_3.png",
-  "/images/joma-academy-iv_4.png",
-  "/images/joma-academy-iv_5.jpg",
-  "/images/joma-academy-iv_6.jpg",
-];
+const galleries = {
+  tracksuit: {
+    code: "JOMA / 101966.703",
+    title: "Academy IV — komplet dresowy",
+    photos: [
+      "/images/joma-academy-iv_1.png",
+      "/images/joma-academy-iv_2.png",
+      "/images/joma-academy-iv_3.png",
+      "/images/joma-academy-iv_4.png",
+      "/images/joma-academy-iv_5.jpg",
+      "/images/joma-academy-iv_6.jpg",
+    ],
+  },
+  jacket: {
+    code: "JOMA / 105301.700",
+    title: "Kurtka treningowa",
+    photos: [
+      "/images/105301.700_1.png",
+      "/images/105301.700_2.png",
+      "/images/105301.700_3.png",
+      "/images/105301.700_4.png",
+      "/images/105301.700_5.png",
+    ],
+  },
+};
 
 type Props = {
+  product: "tracksuit" | "jacket";
   onClose: () => void;
 };
 
-export default function ProductGallery({ onClose }: Props) {
+export default function ProductGallery({ product, onClose }: Props) {
+  const { code, title, photos } = galleries[product];
+
   const [activeIndex, setActiveIndex] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -82,14 +102,14 @@ export default function ProductGallery({ onClose }: Props) {
         <div className="flex items-center justify-between gap-4 px-5 py-4">
           <div>
             <p className="text-club-accent text-xs font-bold tracking-widest uppercase">
-              JOMA / 101966.703
+              {code}
             </p>
 
             <h2
               id="gallery-title"
               className="mt-1 text-lg font-black text-white"
             >
-              Academy IV — komplet dresowy
+              {title}
             </h2>
           </div>
 
@@ -108,7 +128,7 @@ export default function ProductGallery({ onClose }: Props) {
         <div className="bg-club-surface relative flex h-[55vh] max-h-[570px] min-h-[260px] items-center justify-center">
           <Image
             src={photos[activeIndex]}
-            alt={`Dres Joma Academy IV 101966.703 — zdjęcie ${activeIndex + 1}`}
+            alt={`${title} — zdjęcie ${activeIndex + 1}`}
             fill
             sizes="(max-width: 768px) 100vw, 900px"
             className="object-contain p-4"
