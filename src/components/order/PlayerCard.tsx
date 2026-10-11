@@ -71,10 +71,10 @@ export default function PlayerCard({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-bold tracking-widest text-club-accent uppercase">
+          <p className="text-club-accent text-xs font-bold tracking-widest uppercase">
             Zawodnik {index + 1}
           </p>
           <h3 className="mt-1 text-lg font-black">
@@ -122,7 +122,7 @@ export default function PlayerCard({
                   className={`flex items-center justify-between rounded-xl border p-4 text-sm font-semibold transition ${
                     active
                       ? "border-club-accent bg-club-accent/10 text-club-accent"
-                      : "border-white/15 bg-club-bg text-white/70 hover:border-white/40"
+                      : "bg-club-bg border-white/15 text-white/70 hover:border-white/40"
                   }`}
                 >
                   <span className="flex items-center gap-3">

@@ -272,11 +272,11 @@ export default function OrderForm({
   return (
     <section
       id="zamowienie"
-      className="scroll-mt-28 border-b border-white/10 bg-club-bg"
+      className="bg-club-bg scroll-mt-28 border-b border-white/10"
     >
       <div className="mx-auto max-w-7xl px-5 py-20 md:px-8">
         <div className="mb-10">
-          <p className="mb-3 text-xs font-bold tracking-[0.2em] text-club-accent uppercase">
+          <p className="text-club-accent mb-3 text-xs font-bold tracking-[0.2em] uppercase">
             Formularz klubowy
           </p>
 
@@ -289,10 +289,10 @@ export default function OrderForm({
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
           <form
             onSubmit={handlePreview}
-            className="space-y-8 rounded-3xl border border-white/10 bg-club-surface p-6 md:p-8"
+            className="bg-club-surface w-full min-w-0 space-y-8 rounded-3xl border border-white/10 p-4 sm:p-6 md:p-8"
           >
             {currentPlayers.map((player, index) => (
               <div
@@ -324,7 +324,7 @@ export default function OrderForm({
               <button
                 type="button"
                 onClick={addPlayer}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-club-accent/50 px-5 py-4 text-sm font-bold text-club-accent transition hover:bg-club-accent/10"
+                className="border-club-accent/50 text-club-accent hover:bg-club-accent/10 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-5 py-4 text-sm font-bold transition"
               >
                 <UserRoundPlus size={19} />
                 Dodaj kolejnego zawodnika
@@ -348,7 +348,7 @@ export default function OrderForm({
 
             <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
               <p className="flex gap-2 text-xs leading-6 text-white/50">
-                <Info size={17} className="mt-1 shrink-0 text-club-accent" />
+                <Info size={17} className="text-club-accent mt-1 shrink-0" />
                 Dane zawodników i opiekuna zostaną zapisane po kliknięciu
                 „Zapisz zgłoszenie”. Pomiary nie są zapisywane.
               </p>
@@ -362,7 +362,7 @@ export default function OrderForm({
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-club-primary px-6 py-4 text-sm font-extrabold text-club-on-primary hover:bg-club-primary-hover"
+              className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-sm font-extrabold"
             >
               Sprawdź zgłoszenie
               <ArrowRight size={18} />
