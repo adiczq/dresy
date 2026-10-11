@@ -1,6 +1,8 @@
 import type { SizeRecommendation } from "@/components/SizeAdvisor";
 
-export type ProductId = "tracksuit" | "jacket";
+import type { ProductId } from "@/lib/products";
+
+export type { ProductId };
 
 export type OrderFormProps = {
   selectedProducts: ProductId[];
@@ -15,6 +17,7 @@ export type PlayerDraft = {
   products: ProductId[];
   manualTracksuitSize: string;
   manualJacketSize: string;
+  manualBasicJacketSize: string;
 };
 
 export type OrderItem = {

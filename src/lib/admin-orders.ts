@@ -5,12 +5,13 @@ import type { Document } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
 
-type ProductId = "tracksuit" | "jacket";
+import { PRODUCT_IDS, type ProductId } from "@/lib/products";
 
 type StoredItem = {
   productId: ProductId;
   size: string;
   quantity?: number;
+  unitPrice?: number;
 };
 
 type StoredPlayer = {
@@ -49,6 +50,7 @@ export type AdminOrderRow = {
   productId: ProductId;
   size: string;
   quantity: number;
+  unitPrice: number | null;
   parentName: string;
   phone: string;
 };
@@ -103,7 +105,7 @@ export async function getAdminOrders() {
       const playerKey = `${orderId}:${playerIndex}`;
 
       return (player.items ?? []).flatMap((item) => {
-        if (item.productId !== "tracksuit" && item.productId !== "jacket") {
+        if (!PRODUCT_IDS.includes(item.productId)) {
           return [];
         }
 
@@ -126,6 +128,11 @@ export async function getAdminOrders() {
               item.quantity > 0
                 ? item.quantity
                 : 1,
+            unitPrice:
+              typeof item.unitPrice === "number" &&
+              Number.isFinite(item.unitPrice) && item.unitPrice >= 0
+                ? item.unitPrice
+                : null,
             parentName: order.parentName ?? "",
             phone: order.phone ?? "",
           },

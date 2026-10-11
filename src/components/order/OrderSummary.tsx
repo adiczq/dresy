@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { getPlayerInitials } from "@/lib/initials";
+import { PRODUCTS, formatPrice, getLinePrice, getOrderPrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
 type Props = {
@@ -64,20 +65,23 @@ export default function OrderSummary({
                 {player.items.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex justify-between gap-3 text-white/70"
+                    className="flex flex-wrap justify-between gap-2 text-white/70"
                   >
-                    <span>
-                      {item.productId === "tracksuit"
-                        ? "Dres Academy IV"
-                        : "Kurtka"}
-                    </span>
-                    <strong className="text-club-accent">{item.size}</strong>
+                    <span>{PRODUCTS[item.productId].shortLabel} · {item.size}</span>
+                    <strong className="text-club-accent">{formatPrice(getLinePrice(item))}</strong>
                   </div>
                 ))}
+                <p className="text-right text-xs font-semibold text-white/65">
+                  Za zawodnika: {formatPrice(player.items.reduce((sum, item) => sum + getLinePrice(item), 0))}
+                </p>
               </div>
             ))}
 
             <p className="pt-2 text-white/55">Opiekun: {parentName}</p>
+            <p className="flex items-center justify-between gap-2 border-t border-white/15 pt-4 font-black">
+              <span>Łącznie do zapłaty</span>
+              <span className="text-lg text-club-accent">{formatPrice(getOrderPrice(players))}</span>
+            </p>
           </div>
 
           <button
@@ -128,6 +132,12 @@ export default function OrderSummary({
 
           <p className="text-sm leading-7 text-white/55">
             Uzupełnij dane, a następnie kliknij „Sprawdź zgłoszenie”.
+          </p>
+          <p className="mt-4 text-sm font-semibold text-white/70">
+            Wartość wybranych produktów
+          </p>
+          <p className="mt-1 text-2xl font-black text-club-accent">
+            {formatPrice(getOrderPrice(players))}
           </p>
         </div>
       )}

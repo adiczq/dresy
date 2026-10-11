@@ -5,6 +5,7 @@ import { checkOrderRateLimit } from "@/lib/order-rate-limit";
 
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
+import { PRODUCTS, PRODUCT_IDS } from "@/lib/products";
 
 const orderSchema = z.object({
   playerName: z.string().trim().min(3).max(100),
@@ -27,13 +28,13 @@ const orderSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.enum(["tracksuit", "jacket"]),
+        productId: z.enum(PRODUCT_IDS),
         size: z.enum(["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"]),
         quantity: z.number().int().min(1).max(5).default(1),
       }),
     )
     .min(1)
-    .max(2)
+    .max(3)
     .refine(
       (items) =>
         new Set(items.map((item) => item.productId)).size === items.length,
@@ -164,27 +165,54 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
     const now = new Date();
 
+    // Nigdy nie ufamy cenom z przeglądarki. Zapisujemy cenę z serwera
+    // na pozycji zamówienia, aby przyszłe zmiany cennika nie zmieniały historii.
+    const priceItems = (items: z.infer<typeof orderSchema>["items"]) =>
+      items.map((item) => ({
+        ...item,
+        unitPrice: PRODUCTS[item.productId].price,
+      }));
+
+    const itemsTotal = (items: ReturnType<typeof priceItems>) =>
+      items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+
     const document =
       "players" in order
         ? {
             parentName: order.parentName,
             phone: order.phone,
-            players: order.players.map((player) => ({
-              ...player,
-              initials: player.noInitials
-                ? null
-                : getPlayerInitials(player.playerName),
-            })),
+            players: order.players.map((player) => {
+              const items = priceItems(player.items);
+              return {
+                ...player,
+                items,
+                totalPrice: itemsTotal(items),
+                initials: player.noInitials
+                  ? null
+                  : getPlayerInitials(player.playerName),
+              };
+            }),
           }
         : {
             ...order,
+            items: priceItems(order.items),
             initials: order.noInitials
               ? null
               : getPlayerInitials(order.playerName),
           };
 
+    const totalPrice =
+      "players" in document
+        ? (document.players ?? []).reduce(
+            (sum, player) => sum + player.totalPrice,
+            0,
+          )
+        : itemsTotal(document.items);
+
     const result = await db.collection("orders").insertOne({
       ...document,
+      totalPrice,
+      currency: "PLN",
       status: "new",
       editTokenHash,
       createdAt: now,
@@ -203,6 +231,7 @@ export async function POST(request: NextRequest) {
         message: "Zamówienie zostało zapisane.",
         orderId,
         reference,
+        totalPrice,
         editToken,
       },
       { status: 201 },

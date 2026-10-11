@@ -3,6 +3,7 @@
 import type { AdminOrderRow } from "@/lib/admin-orders";
 
 import { Pencil, Trash2 } from "lucide-react";
+import { formatPrice } from "@/lib/products";
 
 type Props = {
   onDelete: (row: AdminOrderRow) => void;
@@ -15,6 +16,7 @@ type Props = {
 type ClothingItem = {
   size: string;
   quantity: number;
+  unitPrice: number | null;
 };
 
 type PlayerRow = {
@@ -22,6 +24,9 @@ type PlayerRow = {
   source: AdminOrderRow;
   tracksuit?: ClothingItem;
   jacket?: ClothingItem;
+  basicJacket?: ClothingItem;
+  total: number;
+  hasUnpriced: boolean;
 };
 
 function groupByPlayer(rows: AdminOrderRow[]): PlayerRow[] {
@@ -34,6 +39,8 @@ function groupByPlayer(rows: AdminOrderRow[]): PlayerRow[] {
       player = {
         key: row.playerKey,
         source: row,
+        total: 0,
+        hasUnpriced: false,
       };
 
       grouped.set(row.playerKey, player);
@@ -42,7 +49,14 @@ function groupByPlayer(rows: AdminOrderRow[]): PlayerRow[] {
     const clothing = {
       size: row.size,
       quantity: row.quantity,
+      unitPrice: row.unitPrice,
     };
+
+    if (row.unitPrice === null) {
+      player.hasUnpriced = true;
+    } else {
+      player.total += row.unitPrice * row.quantity;
+    }
 
     if (row.productId === "tracksuit") {
       player.tracksuit = clothing;
@@ -50,6 +64,9 @@ function groupByPlayer(rows: AdminOrderRow[]): PlayerRow[] {
 
     if (row.productId === "jacket") {
       player.jacket = clothing;
+    }
+    if (row.productId === "jacket_basic") {
+      player.basicJacket = clothing;
     }
   }
 
@@ -84,13 +101,15 @@ export default function PlayersTable({
   const players = groupByPlayer(rows);
 
   return (
-    <table className="w-full min-w-[1050px] text-left text-sm">
+    <table className="w-full min-w-[1240px] text-left text-sm">
       <thead className="bg-club-elevated text-xs text-white/45">
         <tr>
           <th className="px-5 py-4">Zawodnik</th>
           <th className="px-5 py-4">Grupa</th>
           <th className="px-5 py-4">Dres</th>
-          <th className="px-5 py-4">Kurtka</th>
+          <th className="px-5 py-4">Kurtka Joma</th>
+          <th className="px-5 py-4">Kurtka ekonomiczna</th>
+          <th className="px-5 py-4">Kwota</th>
           <th className="px-5 py-4">Inicjały</th>
           <th className="px-5 py-4">Płatność</th>
           <th className="px-5 py-4">Kontakt</th>
@@ -124,6 +143,15 @@ export default function PlayersTable({
 
               <td className="px-5 py-5">
                 <ClothingCell item={player.jacket} />
+              </td>
+
+              <td className="px-5 py-5">
+                <ClothingCell item={player.basicJacket} />
+              </td>
+
+              <td className="px-5 py-5 whitespace-nowrap font-semibold text-club-accent"
+                  title={player.hasUnpriced ? "Starsze zamówienie nie ma zapisanych cen" : undefined}>
+                {player.hasUnpriced ? "—" : formatPrice(player.total)}
               </td>
 
               <td className="px-5 py-5">

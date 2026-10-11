@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList, Download, Shirt, Search, Users } from "lucide-react";
 import PlayersTable from "@/components/admin/PlayersTable";
 import type { AdminOrderRow } from "@/lib/admin-orders";
+import { PRODUCT_IDS, PRODUCTS, formatPrice } from "@/lib/products";
 import PlayerDeleteDialog from "@/components/admin/PlayerDeleteDialog";
 import PlayerEditDialog, {
   type PlayerEditUpdate,
@@ -12,11 +13,6 @@ import PlayerEditDialog, {
 type Props = {
   ordersCount: number;
   rows: AdminOrderRow[];
-};
-
-const productNames = {
-  tracksuit: "Dres Academy IV",
-  jacket: "Kurtka",
 };
 
 const sizeOrder = ["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"];
@@ -84,6 +80,15 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
     .filter((row) => row.productId === "jacket")
     .reduce((sum, row) => sum + row.quantity, 0);
 
+  const basicJacketCount = filteredRows
+    .filter((row) => row.productId === "jacket_basic")
+    .reduce((sum, row) => sum + row.quantity, 0);
+
+  const pricedTotal = filteredRows.reduce(
+    (sum, row) => sum + (row.unitPrice ?? 0) * row.quantity, 0,
+  );
+  const missingPrices = filteredRows.some((row) => row.unitPrice === null);
+
   const sizeTotals = useMemo(() => {
     const totals = new Map<
       string,
@@ -111,7 +116,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
     return [...totals.values()].sort((a, b) => {
       if (a.productId !== b.productId) {
-        return a.productId === "tracksuit" ? -1 : 1;
+        return PRODUCT_IDS.indexOf(a.productId) - PRODUCT_IDS.indexOf(b.productId);
       }
 
       return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
@@ -136,7 +141,9 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         const size =
           row.productId === "tracksuit"
             ? (update.tracksuitSize ?? row.size)
-            : (update.jacketSize ?? row.size);
+            : row.productId === "jacket"
+              ? (update.jacketSize ?? row.size)
+              : (update.basicJacketSize ?? row.size);
 
         return {
           ...row,
@@ -227,7 +234,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           {
             label: "Zawodnicy",
@@ -240,8 +247,18 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
             icon: Shirt,
           },
           {
-            label: "Kurtki",
+            label: "Kurtki Joma",
             value: jacketCount,
+            icon: ClipboardList,
+          },
+          {
+            label: "Kurtki ekonomiczne",
+            value: basicJacketCount,
+            icon: ClipboardList,
+          },
+          {
+            label: "Wartość zamówień (zł)",
+            value: pricedTotal,
             icon: ClipboardList,
           },
         ].map(({ label, value, icon: Icon }) => (
@@ -250,11 +267,18 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
             className="rounded-2xl border border-white/10 bg-club-surface p-6"
           >
             <Icon size={22} className="text-club-accent" />
-            <p className="mt-5 text-3xl font-black">{value}</p>
+            <p className="mt-5 text-3xl font-black">{label === "Wartość zamówień (zł)" ? formatPrice(value) : value}</p>
             <p className="mt-2 text-sm text-white/50">{label}</p>
           </div>
         ))}
       </div>
+
+      {missingPrices && (
+        <p className="rounded-xl border border-amber-300/25 bg-amber-300/10 p-4 text-xs leading-6 text-amber-100">
+          Uwaga: starsze zgłoszenia nie mają zapisanych cen. Kwota w panelu i Excelu
+          obejmuje wyłącznie produkty z potwierdzoną ceną z chwili zamówienia.
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-club-surface">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 p-6 lg:flex-row lg:items-center">
@@ -374,7 +398,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
             >
               <div>
                 <p className="text-sm font-semibold">
-                  {productNames[item.productId]}
+                  {PRODUCTS[item.productId].shortLabel}
                 </p>
                 <p className="mt-1 text-xs text-white/45">
                   Rozmiar {item.size}

@@ -1,10 +1,12 @@
 import { CheckCircle2, Copy } from "lucide-react";
 
 import { getPlayerInitials } from "@/lib/initials";
+import { PRODUCTS, formatPrice, getLinePrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
 type Props = {
   reference: string;
+  totalPrice: number;
   players: OrderPlayer[];
   parentName: string;
   copyStatus: string;
@@ -13,6 +15,7 @@ type Props = {
 
 export default function OrderConfirmation({
   reference,
+  totalPrice,
   players,
   parentName,
   copyStatus,
@@ -33,15 +36,13 @@ export default function OrderConfirmation({
           : getPlayerInitials(player.playerName)
       }`,
 
-      ...player.items.map(
-        (item) =>
-          `${
-            item.productId === "tracksuit" ? "Dres Academy IV" : "Kurtka"
-          }: ${item.size}`,
+      ...player.items.map((item) =>
+        `${PRODUCTS[item.productId].shortLabel}: ${item.size} × ${item.quantity} — ${formatPrice(getLinePrice(item))}`,
       ),
     ]),
 
     "",
+    `ŁĄCZNIE DO ZAPŁATY: ${formatPrice(totalPrice)}`,
     "Status: zgłoszenie zapisane.",
   ].join("\n");
 
@@ -94,18 +95,20 @@ export default function OrderConfirmation({
                   className="flex justify-between gap-3"
                 >
                   <span className="text-white/65">
-                    {item.productId === "tracksuit"
-                      ? "Dres Academy IV"
-                      : "Kurtka"}
+                    {PRODUCTS[item.productId].shortLabel} · {item.size}
                   </span>
 
-                  <span className="font-bold text-club-accent">{item.size}</span>
+                  <span className="font-bold text-club-accent">{formatPrice(getLinePrice(item))}</span>
                 </div>
               ))}
             </div>
           ))}
 
           <p className="text-xs text-white/55">Opiekun: {parentName}</p>
+          <p className="flex items-center justify-between gap-2 border-t border-white/15 pt-4 font-bold">
+            <span>Łącznie do zapłaty</span>
+            <span className="text-lg text-club-accent">{formatPrice(totalPrice)}</span>
+          </p>
         </div>
 
         <button

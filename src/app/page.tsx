@@ -2,11 +2,10 @@
 import OrderForm from "@/components/OrderForm";
 import SizeAdvisor, { type SizeRecommendation } from "@/components/SizeAdvisor";
 import { useState } from "react";
-import { ArrowRight, Check, Shirt, ShoppingBag, Wind } from "lucide-react";
+import { ArrowRight, Check, ShoppingBag } from "lucide-react";
+import { PRODUCTS, formatPrice, type ProductId } from "@/lib/products";
 import Image from "next/image";
 import ProductGallery from "@/components/ProductGallery";
-
-type ProductId = "tracksuit" | "jacket";
 
 const products = [
   {
@@ -16,17 +15,24 @@ const products = [
     model: "JOMA ACADEMY IV",
     description:
       "Bluza i spodnie treningowe. Wygodny komplet na treningi, mecze i wyjazdy klubowe.",
-    icon: Shirt,
     items: ["Bluza", "Spodnie"],
   },
   {
     id: "jacket" as ProductId,
     number: "02",
     name: "Kurtka treningowa",
-    model: "JOMA · MODEL DO POTWIERDZENIA",
+    model: "JOMA 105301.700",
     description:
       "Dodatkowa warstwa na chłodniejsze dni, treningi i mecze wyjazdowe.",
-    icon: Wind,
+    items: ["Kurtka"],
+  },
+  {
+    id: "jacket_basic" as ProductId,
+    number: "03",
+    name: "Kurtka przeciwdeszczowa",
+    model: "JOMA 104796.700",
+    description:
+      "Kurtka przeciwdeszczowa do treningów, meczów i wyjazdów klubowych.",
     items: ["Kurtka"],
   },
 ];
@@ -162,7 +168,8 @@ export default function Home() {
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-white/50">
               Zaznacz produkty, które chcesz zamówić. Możesz wybrać komplet
-              dresowy, kurtkę albo oba produkty.
+              dresowy i jedną lub obie kurtki — możesz wybrać dowolną
+              kombinację.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-white/55">
@@ -174,7 +181,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {products.map((product) => {
             const active = selected.includes(product.id);
             const isTracksuit = product.id === "tracksuit";
@@ -185,7 +192,7 @@ export default function Home() {
                   type="button"
                   onClick={() => toggleProduct(product.id)}
                   aria-pressed={active}
-                  className={`block h-full w-full overflow-hidden rounded-3xl border text-left transition-all duration-200 ${
+                  className={`flex h-full w-full flex-col overflow-hidden rounded-3xl border text-left transition-all duration-200 ${
                     active
                       ? "border-club-accent bg-club-elevated"
                       : "bg-club-elevated border-white/10 hover:border-white/30"
@@ -211,19 +218,15 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* DRES — PRAWDZIWE ZDJĘCIE */}
-
                     <Image
                       src={
-                        isTracksuit
+                        product.id === "tracksuit"
                           ? "/images/joma-academy-iv_1.png"
-                          : "/images/105301.700_1.png"
+                          : product.id === "jacket"
+                            ? "/images/105301.700_1.png"
+                            : "/images/104796.700_1.png"
                       }
-                      alt={
-                        isTracksuit
-                          ? "Joma Academy IV — komplet dresowy"
-                          : "Joma 105301.700 — niebieska kurtka treningowa"
-                      }
+                      alt={product.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
@@ -231,12 +234,19 @@ export default function Home() {
                   </div>
 
                   {/* INFORMACJE O PRODUKCIE */}
-                  <div className="p-7">
+                  <div className="flex w-full flex-1 flex-col p-7">
                     <p className="text-club-accent text-xs font-bold tracking-[0.2em]">
                       {product.model}
                     </p>
 
-                    <h3 className="mt-3 text-2xl font-black">{product.name}</h3>
+                    <div className="mt-3 grid min-h-[68px] grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                      <h3 className="min-w-0 text-xl leading-tight font-black break-words xl:text-[22px]">
+                        {product.name}
+                      </h3>
+                      <span className="text-club-accent shrink-0 text-xl font-black whitespace-nowrap">
+                        {formatPrice(PRODUCTS[product.id].price)}
+                      </span>
+                    </div>
 
                     <p className="mt-3 min-h-14 text-sm leading-6 text-white/50">
                       {product.description}
@@ -253,7 +263,7 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <div className="mt-7 flex items-center justify-between border-t border-white/10 pt-6">
+                    <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-6">
                       <span
                         className={`text-sm font-bold ${
                           active ? "text-club-accent" : "text-white/75"
@@ -279,7 +289,7 @@ export default function Home() {
                   onClick={() => setGalleryProduct(product.id)}
                   className="border-club-accent/40 bg-club-bg/95 text-club-accent hover:bg-club-surface absolute top-52 right-5 z-20 rounded-full border px-4 py-2 text-xs font-bold shadow-lg transition"
                 >
-                  Zobacz {isTracksuit ? 6 : 5} zdjęć
+                  Zobacz {product.id === "jacket" ? 5 : 6} zdjęć
                 </button>
               </div>
             );

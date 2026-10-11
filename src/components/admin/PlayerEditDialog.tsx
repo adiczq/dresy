@@ -14,6 +14,7 @@ export type PlayerEditUpdate = {
   initials: string | null;
   tracksuitSize?: string;
   jacketSize?: string;
+  basicJacketSize?: string;
 };
 
 type Props = {
@@ -28,6 +29,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const tracksuit = rows.find((row) => row.productId === "tracksuit");
 
   const jacket = rows.find((row) => row.productId === "jacket");
+  const basicJacket = rows.find((row) => row.productId === "jacket_basic");
 
   const [playerName, setPlayerName] = useState(player.playerName);
   const [group, setGroup] = useState(player.group);
@@ -35,11 +37,23 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const [initials, setInitials] = useState(player.initials ?? "");
   const [tracksuitSize, setTracksuitSize] = useState(tracksuit?.size ?? "");
   const [jacketSize, setJacketSize] = useState(jacket?.size ?? "");
+  const [basicJacketSize, setBasicJacketSize] = useState(basicJacket?.size ?? "");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const groups = [...new Set([player.group, "Żaki", "Trampkarze"])];
+  const groups = [
+    ...new Set([
+      player.group,
+      "Żaki 2019",
+      "Żaki 2018",
+      "Orlik 2017",
+      "Orlik 2017 II",
+      "Orlik 2016",
+      "Trampkarze 2013",
+      "Junior Młodszy 2010",
+    ]),
+  ].filter(Boolean);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,6 +82,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
           initials: cleanedInitials,
           ...(tracksuit ? { tracksuitSize } : {}),
           ...(jacket ? { jacketSize } : {}),
+          ...(basicJacket ? { basicJacketSize } : {}),
         }),
       });
 
@@ -87,6 +102,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
         initials: noInitials ? null : cleanedInitials,
         ...(tracksuit ? { tracksuitSize } : {}),
         ...(jacket ? { jacketSize } : {}),
+        ...(basicJacket ? { basicJacketSize } : {}),
       });
     } catch (err) {
       setError(
@@ -103,11 +119,11 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-player-title"
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/15 bg-club-surface p-6 text-white shadow-2xl md:p-8"
+        className="bg-club-surface max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/15 p-6 text-white shadow-2xl md:p-8"
       >
         <div className="mb-7 flex items-center justify-between gap-3">
           <div>
-            <p className="mb-2 text-xs font-bold tracking-widest text-club-accent uppercase">
+            <p className="text-club-accent mb-2 text-xs font-bold tracking-widest uppercase">
               Panel trenerów
             </p>
 
@@ -148,7 +164,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
               maxLength={100}
               value={playerName}
               onChange={(event) => setPlayerName(event.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-club-bg px-4 py-3 text-sm outline-none focus:border-club-accent"
+              className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-4 py-3 text-sm outline-none"
             />
           </div>
 
@@ -164,7 +180,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
               id="edit-group"
               value={group}
               onChange={(event) => setGroup(event.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-club-bg px-4 py-3 text-sm outline-none focus:border-club-accent"
+              className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-4 py-3 text-sm outline-none"
             >
               {groups.map((name) => (
                 <option key={name} value={name}>
@@ -189,7 +205,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
               disabled={noInitials}
               value={initials}
               onChange={(event) => setInitials(event.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-club-bg px-4 py-3 text-sm uppercase outline-none focus:border-club-accent disabled:opacity-40"
+              className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-4 py-3 text-sm uppercase outline-none disabled:opacity-40"
             />
 
             <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs text-white/60">
@@ -197,7 +213,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
                 type="checkbox"
                 checked={noInitials}
                 onChange={(event) => setNoInitials(event.target.checked)}
-                className="h-4 w-4 accent-club-accent"
+                className="accent-club-accent h-4 w-4"
               />
               Bez inicjałów
             </label>
@@ -217,7 +233,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
                   id="edit-tracksuit"
                   value={tracksuitSize}
                   onChange={(event) => setTracksuitSize(event.target.value)}
-                  className="w-full rounded-xl border border-white/15 bg-club-bg px-3 py-3 text-sm outline-none focus:border-club-accent"
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none"
                 >
                   {SIZES.map((size) => (
                     <option key={size} value={size}>
@@ -230,24 +246,25 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
 
             {jacket && (
               <div>
-                <label
-                  htmlFor="edit-jacket"
-                  className="mb-2 block text-sm font-semibold"
-                >
-                  Rozmiar kurtki
+                <label htmlFor="edit-jacket" className="mb-2 block text-sm font-semibold">
+                  Rozmiar kurtki Joma
                 </label>
-
-                <select
-                  id="edit-jacket"
-                  value={jacketSize}
+                <select id="edit-jacket" value={jacketSize}
                   onChange={(event) => setJacketSize(event.target.value)}
-                  className="w-full rounded-xl border border-white/15 bg-club-bg px-3 py-3 text-sm outline-none focus:border-club-accent"
-                >
-                  {SIZES.map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
+                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </div>
+            )}
+            {basicJacket && (
+              <div>
+                <label htmlFor="edit-basic-jacket" className="mb-2 block text-sm font-semibold">
+                  Rozmiar kurtki ekonomicznej
+                </label>
+                <select id="edit-basic-jacket" value={basicJacketSize}
+                  onChange={(event) => setBasicJacketSize(event.target.value)}
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
+                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
                 </select>
               </div>
             )}
@@ -280,7 +297,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-xl bg-club-primary px-4 py-3 text-sm font-extrabold text-club-on-primary hover:bg-club-primary-hover disabled:opacity-50"
+              className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover flex-1 rounded-xl px-4 py-3 text-sm font-extrabold disabled:opacity-50"
             >
               {saving ? "Zapisywanie..." : "Zapisz zmiany"}
             </button>

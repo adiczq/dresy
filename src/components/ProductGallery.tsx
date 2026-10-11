@@ -1,5 +1,5 @@
 "use client";
-
+import type { ProductId } from "@/lib/products";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -28,10 +28,22 @@ const galleries = {
       "/images/105301.700_5.png",
     ],
   },
+  jacket_basic: {
+    code: "JOMA / 104796.700",
+    title: "Kurtka przeciwdeszczowa",
+    photos: [
+      "/images/104796.700_1.png",
+      "/images/104796.700_2.png",
+      "/images/104796.700_3.png",
+      "/images/104796.700_4.png",
+      "/images/104796.700_5.png",
+      "/images/104796.700_6.png",
+    ],
+  },
 };
 
 type Props = {
-  product: "tracksuit" | "jacket";
+  product: ProductId;
   onClose: () => void;
 };
 

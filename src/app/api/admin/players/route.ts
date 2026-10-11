@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { getAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
+import type { ProductId } from "@/lib/products";
 
 const sizes = [
   "6XS",
@@ -29,6 +30,7 @@ const editSchema = z
       .regex(/^[\p{L}0-9]*$/u),
     tracksuitSize: z.enum(sizes).optional(),
     jacketSize: z.enum(sizes).optional(),
+    basicJacketSize: z.enum(sizes).optional(),
   })
   .strict()
   .refine((data) => data.noInitials || data.initials.length > 0, {
@@ -37,7 +39,7 @@ const editSchema = z
   });
 
 type StoredItem = {
-  productId: "tracksuit" | "jacket";
+  productId: ProductId;
   size: string;
   quantity?: number;
 };
@@ -170,7 +172,9 @@ export async function PATCH(request: NextRequest) {
           ? data.tracksuitSize
           : item.productId === "jacket"
             ? data.jacketSize
-            : undefined;
+            : item.productId === "jacket_basic"
+              ? data.basicJacketSize
+              : undefined;
 
       if (!nextSize) {
         return NextResponse.json(

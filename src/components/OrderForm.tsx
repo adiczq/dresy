@@ -16,6 +16,7 @@ import type {
 } from "@/components/order/types";
 
 import { getPlayerInitials } from "@/lib/initials";
+import { PRODUCTS, formatPrice, getLinePrice, getOrderPrice } from "@/lib/products";
 
 export default function OrderForm({
   selectedProducts,
@@ -30,6 +31,7 @@ export default function OrderForm({
       products: selectedProducts,
       manualTracksuitSize: "",
       manualJacketSize: "",
+      manualBasicJacketSize: "",
     },
   ]);
 
@@ -44,6 +46,7 @@ export default function OrderForm({
 
   const [savedOrder, setSavedOrder] = useState<{
     reference: string;
+    totalPrice: number;
   } | null>(null);
 
   // Produkty pierwszego zawodnika wybieramy
@@ -82,6 +85,14 @@ export default function OrderForm({
       });
     }
 
+    if (player.products.includes("jacket_basic")) {
+      items.push({
+        productId: "jacket_basic",
+        size: player.manualBasicJacketSize || suggestedJacket || "",
+        quantity: 1,
+      });
+    }
+
     return {
       playerName: player.playerName.trim(),
       group: player.group.trim(),
@@ -115,6 +126,7 @@ export default function OrderForm({
         products: [],
         manualTracksuitSize: "",
         manualJacketSize: "",
+      manualBasicJacketSize: "",
       },
     ]);
 
@@ -170,6 +182,8 @@ export default function OrderForm({
     }
   }
 
+  const orderTotal = getOrderPrice(orderPlayers);
+
   const summary = [
     "GÓRNIK RADLIN — PODGLĄD ZGŁOSZENIA",
     `Opiekun: ${parentName.trim()}`,
@@ -185,15 +199,14 @@ export default function OrderForm({
           : getPlayerInitials(player.playerName)
       }`,
 
-      ...player.items.map(
-        (item) =>
-          `${
-            item.productId === "tracksuit" ? "Dres Academy IV" : "Kurtka"
-          }: ${item.size}`,
+      ...player.items.map((item) =>
+        `${PRODUCTS[item.productId].shortLabel}: ${item.size} × ${item.quantity} — ${formatPrice(getLinePrice(item))}`,
       ),
+      `Razem za zawodnika: ${formatPrice(player.items.reduce((sum, item) => sum + getLinePrice(item), 0))}`,
     ]),
 
     "",
+    `ŁĄCZNIE DO ZAPŁATY: ${formatPrice(orderTotal)}`,
     "To podgląd — zgłoszenie nie zostało zapisane.",
   ].join("\n");
 
@@ -235,6 +248,7 @@ export default function OrderForm({
       const data = (await response.json()) as {
         success?: boolean;
         reference?: string;
+        totalPrice?: number;
         error?: string;
       };
 
@@ -245,6 +259,7 @@ export default function OrderForm({
       setCopyStatus("");
       setSavedOrder({
         reference: data.reference,
+        totalPrice: data.totalPrice ?? orderTotal,
       });
     } catch (error) {
       setSaveError(
@@ -261,6 +276,7 @@ export default function OrderForm({
     return (
       <OrderConfirmation
         reference={savedOrder.reference}
+        totalPrice={savedOrder.totalPrice}
         players={orderPlayers}
         parentName={parentName}
         copyStatus={copyStatus}

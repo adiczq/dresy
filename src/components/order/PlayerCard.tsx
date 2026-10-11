@@ -6,6 +6,7 @@ import type { SizeRecommendation } from "@/components/SizeAdvisor";
 import ClothingSizes from "./ClothingSizes";
 import PlayerDetails from "./PlayerDetails";
 import type { PlayerDraft, ProductId } from "./types";
+import { PRODUCTS, formatPrice } from "@/lib/products";
 
 type PlayerCardProps = {
   showProductSelector?: boolean;
@@ -35,6 +36,7 @@ export default function PlayerCard({
 }: PlayerCardProps) {
   const hasTracksuit = player.products.includes("tracksuit");
   const hasJacket = player.products.includes("jacket");
+  const hasBasicJacket = player.products.includes("jacket_basic");
 
   const suggestedTracksuit = recommendation?.ready ? recommendation.set : null;
 
@@ -48,6 +50,7 @@ export default function PlayerCard({
     player.manualTracksuitSize || automaticTracksuitSize || "";
 
   const jacketSize = player.manualJacketSize || suggestedJacket || "";
+  const basicJacketSize = player.manualBasicJacketSize || suggestedJacket || "";
 
   function toggleProduct(id: ProductId) {
     const products = player.products.includes(id)
@@ -65,7 +68,12 @@ export default function PlayerCard({
     },
     {
       id: "jacket" as ProductId,
-      label: "Kurtka",
+      label: "Kurtka Joma",
+      Icon: Wind,
+    },
+    {
+      id: "jacket_basic" as ProductId,
+      label: "Kurtka ekonomiczna",
       Icon: Wind,
     },
   ];
@@ -125,9 +133,9 @@ export default function PlayerCard({
                       : "bg-club-bg border-white/15 text-white/70 hover:border-white/40"
                   }`}
                 >
-                  <span className="flex items-center gap-3">
-                    <Icon size={20} />
-                    {label}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Icon size={20} className="shrink-0" />
+                    <span>{label} <span className="whitespace-nowrap opacity-80">({formatPrice(PRODUCTS[id].price)})</span></span>
                   </span>
                   <span>{active ? "✓" : "+"}</span>
                 </button>
@@ -136,14 +144,16 @@ export default function PlayerCard({
           </div>
         </div>
       )}
-      {(hasTracksuit || hasJacket) && (
+      {(hasTracksuit || hasJacket || hasBasicJacket) && (
         <div className="border-t border-white/10 pt-6">
           <ClothingSizes
             idPrefix={player.id}
             hasTracksuit={hasTracksuit}
             hasJacket={hasJacket}
+            hasBasicJacket={hasBasicJacket}
             tracksuitSize={tracksuitSize}
             jacketSize={jacketSize}
+            basicJacketSize={basicJacketSize}
             suggestedTracksuit={suggestedTracksuit}
             suggestedJacket={suggestedJacket}
             setManualTracksuitSize={(manualTracksuitSize) =>
@@ -151,6 +161,9 @@ export default function PlayerCard({
             }
             setManualJacketSize={(manualJacketSize) =>
               onChange({ manualJacketSize })
+            }
+            setManualBasicJacketSize={(manualBasicJacketSize) =>
+              onChange({ manualBasicJacketSize })
             }
             recommendation={recommendation ?? emptyRecommendation}
             showSizeAdvisorLink={Boolean(recommendation)}

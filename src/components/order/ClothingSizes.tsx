@@ -7,12 +7,15 @@ type ClothingSizesProps = {
   showSizeAdvisorLink?: boolean;
   hasTracksuit: boolean;
   hasJacket: boolean;
+  hasBasicJacket: boolean;
   tracksuitSize: string;
   jacketSize: string;
+  basicJacketSize: string;
   suggestedTracksuit: string | null;
   suggestedJacket: string | null;
   setManualTracksuitSize: (value: string) => void;
   setManualJacketSize: (value: string) => void;
+  setManualBasicJacketSize: (value: string) => void;
   recommendation: SizeRecommendation;
 };
 
@@ -21,12 +24,15 @@ export default function ClothingSizes({
   showSizeAdvisorLink = true,
   hasTracksuit,
   hasJacket,
+  hasBasicJacket,
   tracksuitSize,
   jacketSize,
+  basicJacketSize,
   suggestedTracksuit,
   suggestedJacket,
   setManualTracksuitSize,
   setManualJacketSize,
+  setManualBasicJacketSize,
   recommendation,
 }: ClothingSizesProps) {
   return (
@@ -48,10 +54,19 @@ export default function ClothingSizes({
         {hasJacket && (
           <SizePicker
             id={`${idPrefix}-jacket-size`}
-            label="Rozmiar kurtki"
+            label="Rozmiar kurtki Joma (120 zł)"
             value={jacketSize}
             suggestion={suggestedJacket}
             onChange={setManualJacketSize}
+          />
+        )}
+        {hasBasicJacket && (
+          <SizePicker
+            id={`${idPrefix}-basic-jacket-size`}
+            label="Rozmiar kurtki ekonomicznej (80 zł)"
+            value={basicJacketSize}
+            suggestion={suggestedJacket}
+            onChange={setManualBasicJacketSize}
           />
         )}
       </div>
@@ -78,8 +93,8 @@ export default function ClothingSizes({
         </a>
       )}
       <p className="mt-3 text-xs leading-6 text-white/40">
-        Rozmiary są orientacyjne. Nie zakładamy, że kurtka musi mieć identyczny
-        krój jak komplet dresowy.
+        Rozmiary są orientacyjne. Krój obu kurtek może różnić się od kompletu
+        dresowego i od siebie nawzajem. Przed zakupem potwierdź dopasowanie.
       </p>
     </div>
   );
