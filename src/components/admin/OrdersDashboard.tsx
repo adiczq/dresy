@@ -43,9 +43,19 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
   const groups = useMemo(
     () =>
-      [...new Set(displayRows.map((row) => row.group))]
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, "pl")),
+      [
+        ...new Set([
+          "Skrzat G1 2020",
+          "Żaki 2019",
+          "Żaki 2018",
+          "Orlik 2017",
+          "Orlik 2017 II",
+          "Orlik 2016",
+          "Trampkarze 2013",
+          "Junior Młodszy 2010",
+          ...displayRows.map((row) => row.group),
+        ]),
+      ].filter(Boolean),
     [displayRows],
   );
 

@@ -80,7 +80,7 @@ function ClothingCell({ item }: { item?: ClothingItem }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="font-black text-club-accent">{item.size}</span>
+      <span className="text-club-accent font-black">{item.size}</span>
 
       {item.quantity > 1 && (
         <span className="rounded-md bg-white/10 px-2 py-1 text-xs text-white/60">
@@ -108,7 +108,7 @@ export default function PlayersTable({
           <th className="px-5 py-4">Grupa</th>
           <th className="px-5 py-4">Dres</th>
           <th className="px-5 py-4">Kurtka Joma</th>
-          <th className="px-5 py-4">Kurtka ekonomiczna</th>
+          <th className="px-5 py-4">Kurtka przeciwdeszczowa</th>
           <th className="px-5 py-4">Kwota</th>
           <th className="px-5 py-4">Inicjały</th>
           <th className="px-5 py-4">Płatność</th>
@@ -149,14 +149,20 @@ export default function PlayersTable({
                 <ClothingCell item={player.basicJacket} />
               </td>
 
-              <td className="px-5 py-5 whitespace-nowrap font-semibold text-club-accent"
-                  title={player.hasUnpriced ? "Starsze zamówienie nie ma zapisanych cen" : undefined}>
+              <td
+                className="text-club-accent px-5 py-5 font-semibold whitespace-nowrap"
+                title={
+                  player.hasUnpriced
+                    ? "Starsze zamówienie nie ma zapisanych cen"
+                    : undefined
+                }
+              >
                 {player.hasUnpriced ? "—" : formatPrice(player.total)}
               </td>
 
               <td className="px-5 py-5">
                 {row.initials ? (
-                  <span className="inline-flex rounded-lg border border-club-accent/20 bg-club-accent/10 px-3 py-2 text-xs font-black tracking-wider text-club-accent">
+                  <span className="border-club-accent/20 bg-club-accent/10 text-club-accent inline-flex rounded-lg border px-3 py-2 text-xs font-black tracking-wider">
                     {row.initials}
                   </span>
                 ) : (
@@ -174,7 +180,7 @@ export default function PlayersTable({
                       void onPaymentChange(row, event.target.checked)
                     }
                     aria-label={`Zapłacono za odzież: ${row.playerName}`}
-                    className="h-4 w-4 shrink-0 cursor-pointer accent-club-success disabled:cursor-wait"
+                    className="accent-club-success h-4 w-4 shrink-0 cursor-pointer disabled:cursor-wait"
                   />
 
                   <span
@@ -205,7 +211,7 @@ export default function PlayersTable({
                     type="button"
                     onClick={() => onEdit(row)}
                     aria-label={`Edytuj zawodnika ${row.playerName}`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 transition hover:border-club-accent hover:text-club-accent"
+                    className="hover:border-club-accent hover:text-club-accent inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 transition"
                   >
                     <Pencil size={15} />
                     Edytuj
