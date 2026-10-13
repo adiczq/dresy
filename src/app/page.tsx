@@ -58,38 +58,11 @@ export default function Home() {
 
   return (
     <main className="bg-club-bg min-h-screen text-white">
-      {/* HEADER */}
-      <header className="bg-club-bg/95 sticky top-0 z-50 border-b border-white/10 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 md:px-8">
-          <a href="#" className="flex items-center gap-3">
-            <div className="border-club-accent/30 bg-club-accent/10 text-club-accent flex h-11 w-11 items-center justify-center rounded-xl border font-black">
-              GR
-            </div>
-            <div>
-              <p className="text-sm font-black tracking-[0.12em]">
-                GÓRNIK RADLIN
-              </p>
-              <p className="text-[10px] tracking-[0.2em] text-white/45 uppercase">
-                Odzież klubowa
-              </p>
-            </div>
-          </a>
-
-          <a
-            href="#produkty"
-            className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition"
-          >
-            Zamów odzież
-            <ArrowRight size={15} />
-          </a>
-        </div>
-      </header>
-
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="bg-club-accent/10 pointer-events-none absolute top-[-120px] right-[-120px] h-[420px] w-[420px] rounded-full blur-[110px]" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-14 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-12 md:gap-14 md:px-8 md:py-20 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
             <div className="border-club-accent/25 bg-club-accent/10 text-club-accent mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold tracking-wider">
               <span className="bg-club-primary h-2 w-2 rounded-full" />
@@ -109,16 +82,6 @@ export default function Home() {
               rozmiar i złóż zamówienie bez zbędnych wiadomości i formularzy
               papierowych.
             </p>
-
-            <div className="mt-9 flex flex-wrap gap-3">
-              <a
-                href="#produkty"
-                className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover inline-flex items-center gap-3 rounded-xl px-6 py-4 text-sm font-extrabold transition"
-              >
-                Zobacz kolekcję
-                <ArrowRight size={18} />
-              </a>
-            </div>
           </div>
 
           {/* HERO VISUAL */}
@@ -140,14 +103,11 @@ export default function Home() {
               />
             </div>
 
-            <div className="absolute right-7 bottom-7 left-7 flex items-end justify-between">
-              <div>
-                <p className="text-xs tracking-widest text-white/40">
-                  OFFICIAL CLUB COLLECTION
-                </p>
-                <p className="mt-1 text-lg font-black">GÓRNIK RADLIN</p>
-              </div>
-              <span className="text-club-accent text-3xl font-black">01.</span>
+            <div className="absolute right-7 bottom-7 left-7">
+              <p className="text-xs tracking-widest text-white/40">
+                OFFICIAL CLUB COLLECTION
+              </p>
+              <p className="mt-1 text-lg font-black">GÓRNIK RADLIN</p>
             </div>
           </div>
         </div>
