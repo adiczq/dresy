@@ -1,7 +1,8 @@
 import type { AdminOrderRow } from "@/lib/admin-orders";
 import { PRODUCT_IDS, PRODUCTS, type ProductId } from "@/lib/products";
+import { ORDER_SIZES } from "@/lib/sizes";
 
-const sizeOrder = ["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"];
+const sizeOrder: readonly string[] = ORDER_SIZES;
 
 const DARK = "FF11263D";
 const ACCENT = "FF60A5FA";
@@ -54,7 +55,8 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
       players.set(row.playerKey, player);
     }
 
-    const description = row.quantity > 1 ? `${row.size} × ${row.quantity}` : row.size;
+    const description =
+      row.quantity > 1 ? `${row.size} × ${row.quantity}` : row.size;
     if (row.productId === "tracksuit") player.tracksuits.push(description);
     if (row.productId === "jacket") player.jackets.push(description);
     if (row.productId === "jacket_basic") player.basicJackets.push(description);
@@ -106,7 +108,10 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
     const cell = heading.getCell(col);
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: DARK } };
     cell.font = { name: "Aptos", bold: true, color: { argb: WHITE } };
-    cell.alignment = { vertical: "middle", horizontal: col === 1 ? "left" : "center" };
+    cell.alignment = {
+      vertical: "middle",
+      horizontal: col === 1 ? "left" : "center",
+    };
   }
 
   let index = 0;
@@ -123,12 +128,23 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
     row.height = 28;
     for (let col = 1; col <= 7; col++) {
       const cell = row.getCell(col);
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: index % 2 === 0 ? LIGHT : WHITE } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: index % 2 === 0 ? LIGHT : WHITE },
+      };
       cell.font = { name: "Aptos", size: 11, color: { argb: TEXT } };
-      cell.alignment = { vertical: "middle", horizontal: col === 1 ? "left" : "center", wrapText: true };
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: col === 1 ? "left" : "center",
+        wrapText: true,
+      };
     }
     row.getCell(7).numFmt = MONEY;
-    row.getCell(6).font = { bold: true, color: { argb: player.payment === "TAK" ? "FF208040" : "FFC08020" } };
+    row.getCell(6).font = {
+      bold: true,
+      color: { argb: player.payment === "TAK" ? "FF208040" : "FFC08020" },
+    };
     index++;
   }
 
@@ -138,22 +154,37 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
   const title = sheet.getRow(summaryStart);
   title.height = 30;
   title.getCell(1).value = "PODSUMOWANIE ZAMÓWIENIA";
-  title.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: DARK } };
+  title.getCell(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: DARK },
+  };
   title.getCell(1).font = { bold: true, size: 13, color: { argb: ACCENT } };
   title.getCell(1).alignment = { vertical: "middle" };
 
   const summaryHeading = sheet.getRow(summaryStart + 1);
-  summaryHeading.values = ["Produkt", "Rozmiar", "Sztuk", "Cena jedn. (zł)", "Wartość (zł)"];
+  summaryHeading.values = [
+    "Produkt",
+    "Rozmiar",
+    "Sztuk",
+    "Cena jedn. (zł)",
+    "Wartość (zł)",
+  ];
   summaryHeading.height = 26;
   for (let col = 1; col <= 5; col++) {
     const cell = summaryHeading.getCell(col);
     cell.font = { bold: true, color: { argb: DARK } };
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ACCENT } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: ACCENT },
+    };
   }
 
-  const sorted = [...totals.values()].sort((a, b) =>
-    PRODUCT_IDS.indexOf(a.productId) - PRODUCT_IDS.indexOf(b.productId) ||
-    sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size),
+  const sorted = [...totals.values()].sort(
+    (a, b) =>
+      PRODUCT_IDS.indexOf(a.productId) - PRODUCT_IDS.indexOf(b.productId) ||
+      sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size),
   );
 
   let nextRow = summaryStart + 2;
@@ -162,7 +193,7 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
     for (const item of subset) {
       const row = sheet.getRow(nextRow++);
       row.values = [
-        PRODUCTS[productId].shortLabel,
+        `${PRODUCTS[productId].shortLabel} (${PRODUCTS[productId].catalogNumber})`,
         item.size,
         item.quantity,
         item.missingPrices
@@ -191,14 +222,29 @@ export async function downloadOrdersExcel(rows: AdminOrderRow[]) {
     for (let col = 1; col <= 5; col++) {
       const cell = row.getCell(col);
       cell.font = { bold: true, color: { argb: DARK } };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: SOFT_BLUE } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: SOFT_BLUE },
+      };
     }
   }
 
-  const allMissing = [...players.values()].some((player) => player.missingPrices);
-  const grandTotal = [...players.values()].reduce((sum, player) => sum + player.total, 0);
+  const allMissing = [...players.values()].some(
+    (player) => player.missingPrices,
+  );
+  const grandTotal = [...players.values()].reduce(
+    (sum, player) => sum + player.total,
+    0,
+  );
   const totalRow = sheet.getRow(nextRow++);
-  totalRow.values = ["ŁĄCZNA WARTOŚĆ", "", "", "", allMissing ? "—" : grandTotal];
+  totalRow.values = [
+    "ŁĄCZNA WARTOŚĆ",
+    "",
+    "",
+    "",
+    allMissing ? "—" : grandTotal,
+  ];
   totalRow.getCell(5).numFmt = MONEY;
   for (let col = 1; col <= 5; col++) {
     const cell = totalRow.getCell(col);

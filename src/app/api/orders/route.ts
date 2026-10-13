@@ -6,6 +6,7 @@ import { checkOrderRateLimit } from "@/lib/order-rate-limit";
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
 import { PRODUCTS, PRODUCT_IDS } from "@/lib/products";
+import { ORDER_SIZES } from "@/lib/sizes";
 
 const orderSchema = z.object({
   playerName: z.string().trim().min(3).max(100),
@@ -29,7 +30,7 @@ const orderSchema = z.object({
     .array(
       z.object({
         productId: z.enum(PRODUCT_IDS),
-        size: z.enum(["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"]),
+        size: z.enum(ORDER_SIZES),
         quantity: z.number().int().min(1).max(5).default(1),
       }),
     )

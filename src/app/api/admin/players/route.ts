@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId, type Document } from "mongodb";
 import { z } from "zod";
-
+import { ORDER_SIZES } from "@/lib/sizes";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getDb } from "@/lib/mongodb";
 import type { ProductId } from "@/lib/products";
 
-const sizes = [
-  "6XS",
-  "5XS",
-  "4XS",
-  "3XS",
-  "2XS",
-  "XS",
-  "Do ustalenia",
-] as const;
+const sizes = ORDER_SIZES;
 
 const editSchema = z
   .object({

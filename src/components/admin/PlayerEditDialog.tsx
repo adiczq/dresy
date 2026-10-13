@@ -2,10 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import { Pencil, X } from "lucide-react";
-
 import type { AdminOrderRow } from "@/lib/admin-orders";
+import { ORDER_SIZES } from "@/lib/sizes";
 
-const SIZES = ["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"];
+const SIZES = ORDER_SIZES;
 
 export type PlayerEditUpdate = {
   playerKey: string;
@@ -37,7 +37,9 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const [initials, setInitials] = useState(player.initials ?? "");
   const [tracksuitSize, setTracksuitSize] = useState(tracksuit?.size ?? "");
   const [jacketSize, setJacketSize] = useState(jacket?.size ?? "");
-  const [basicJacketSize, setBasicJacketSize] = useState(basicJacket?.size ?? "");
+  const [basicJacketSize, setBasicJacketSize] = useState(
+    basicJacket?.size ?? "",
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -246,25 +248,45 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
 
             {jacket && (
               <div>
-                <label htmlFor="edit-jacket" className="mb-2 block text-sm font-semibold">
+                <label
+                  htmlFor="edit-jacket"
+                  className="mb-2 block text-sm font-semibold"
+                >
                   Rozmiar kurtki Joma
                 </label>
-                <select id="edit-jacket" value={jacketSize}
+                <select
+                  id="edit-jacket"
+                  value={jacketSize}
                   onChange={(event) => setJacketSize(event.target.value)}
-                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
-                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none"
+                >
+                  {SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
             {basicJacket && (
               <div>
-                <label htmlFor="edit-basic-jacket" className="mb-2 block text-sm font-semibold">
+                <label
+                  htmlFor="edit-basic-jacket"
+                  className="mb-2 block text-sm font-semibold"
+                >
                   Rozmiar kurtki ekonomicznej
                 </label>
-                <select id="edit-basic-jacket" value={basicJacketSize}
+                <select
+                  id="edit-basic-jacket"
+                  value={basicJacketSize}
                   onChange={(event) => setBasicJacketSize(event.target.value)}
-                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
-                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none"
+                >
+                  {SIZES.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}

@@ -1,5 +1,5 @@
 "use client";
-
+import { ORDER_SIZES } from "@/lib/sizes";
 import { useMemo, useState } from "react";
 import { ClipboardList, Download, Shirt, Search, Users } from "lucide-react";
 import PlayersTable from "@/components/admin/PlayersTable";
@@ -15,7 +15,7 @@ type Props = {
   rows: AdminOrderRow[];
 };
 
-const sizeOrder = ["6XS", "5XS", "4XS", "3XS", "2XS", "XS", "Do ustalenia"];
+const sizeOrder: readonly string[] = ORDER_SIZES;
 
 export default function OrdersDashboard({ ordersCount, rows }: Props) {
   const [selectedGroup, setSelectedGroup] = useState("all");
@@ -85,7 +85,8 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
     .reduce((sum, row) => sum + row.quantity, 0);
 
   const pricedTotal = filteredRows.reduce(
-    (sum, row) => sum + (row.unitPrice ?? 0) * row.quantity, 0,
+    (sum, row) => sum + (row.unitPrice ?? 0) * row.quantity,
+    0,
   );
   const missingPrices = filteredRows.some((row) => row.unitPrice === null);
 
@@ -116,7 +117,9 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
     return [...totals.values()].sort((a, b) => {
       if (a.productId !== b.productId) {
-        return PRODUCT_IDS.indexOf(a.productId) - PRODUCT_IDS.indexOf(b.productId);
+        return (
+          PRODUCT_IDS.indexOf(a.productId) - PRODUCT_IDS.indexOf(b.productId)
+        );
       }
 
       return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
@@ -264,10 +267,12 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         ].map(({ label, value, icon: Icon }) => (
           <div
             key={label}
-            className="rounded-2xl border border-white/10 bg-club-surface p-6"
+            className="bg-club-surface rounded-2xl border border-white/10 p-6"
           >
             <Icon size={22} className="text-club-accent" />
-            <p className="mt-5 text-3xl font-black">{label === "Wartość zamówień (zł)" ? formatPrice(value) : value}</p>
+            <p className="mt-5 text-3xl font-black">
+              {label === "Wartość zamówień (zł)" ? formatPrice(value) : value}
+            </p>
             <p className="mt-2 text-sm text-white/50">{label}</p>
           </div>
         ))}
@@ -275,12 +280,13 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
       {missingPrices && (
         <p className="rounded-xl border border-amber-300/25 bg-amber-300/10 p-4 text-xs leading-6 text-amber-100">
-          Uwaga: starsze zgłoszenia nie mają zapisanych cen. Kwota w panelu i Excelu
-          obejmuje wyłącznie produkty z potwierdzoną ceną z chwili zamówienia.
+          Uwaga: starsze zgłoszenia nie mają zapisanych cen. Kwota w panelu i
+          Excelu obejmuje wyłącznie produkty z potwierdzoną ceną z chwili
+          zamówienia.
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-club-surface">
+      <div className="bg-club-surface overflow-hidden rounded-2xl border border-white/10">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 p-6 lg:flex-row lg:items-center">
           <div>
             <h2 className="text-xl font-black">Lista dla trenerów</h2>
@@ -303,7 +309,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Szukaj zawodnika..."
                 aria-label="Szukaj zawodnika"
-                className="w-full rounded-xl border border-white/15 bg-club-bg py-3 pr-4 pl-11 text-sm text-white outline-none placeholder:text-white/35 focus:border-club-accent sm:w-56"
+                className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 py-3 pr-4 pl-11 text-sm text-white outline-none placeholder:text-white/35 sm:w-56"
               />
             </div>
 
@@ -311,7 +317,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
               aria-label="Filtruj według grupy"
               value={selectedGroup}
               onChange={(event) => setSelectedGroup(event.target.value)}
-              className="rounded-xl border border-white/15 bg-club-bg px-4 py-3 text-sm text-white outline-none focus:border-club-accent"
+              className="bg-club-bg focus:border-club-accent rounded-xl border border-white/15 px-4 py-3 text-sm text-white outline-none"
             >
               <option value="all">Wszystkie grupy</option>
               {groups.map((group) => (
@@ -329,7 +335,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
                   event.target.value as "all" | "paid" | "unpaid",
                 )
               }
-              className="rounded-xl border border-white/15 bg-club-bg px-4 py-3 text-sm text-white outline-none focus:border-club-accent"
+              className="bg-club-bg focus:border-club-accent rounded-xl border border-white/15 px-4 py-3 text-sm text-white outline-none"
             >
               <option value="all">Wszystkie płatności</option>
               <option value="paid">Zapłacono</option>
@@ -340,7 +346,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
               type="button"
               onClick={() => void handleExportExcel()}
               disabled={!filteredRows.length || exporting}
-              className="flex items-center gap-2 rounded-xl bg-club-primary px-5 py-3 text-sm font-bold text-club-on-primary hover:bg-club-primary-hover disabled:opacity-40"
+              className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold disabled:opacity-40"
             >
               <Download size={17} />
               {exporting ? "Przygotowywanie..." : "Pobierz Excel"}
@@ -383,7 +389,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         )}
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-club-surface p-6">
+      <div className="bg-club-surface rounded-2xl border border-white/10 p-6">
         <h2 className="text-lg font-black">Podsumowanie rozmiarów</h2>
 
         <p className="mt-2 text-xs text-white/50">
@@ -394,7 +400,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
           {sizeTotals.map((item) => (
             <div
               key={`${item.productId}-${item.size}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-club-bg p-4"
+              className="bg-club-bg flex items-center justify-between gap-3 rounded-xl border border-white/10 p-4"
             >
               <div>
                 <p className="text-sm font-semibold">
@@ -405,7 +411,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
                 </p>
               </div>
 
-              <span className="text-2xl font-black text-club-accent">
+              <span className="text-club-accent text-2xl font-black">
                 {item.quantity}
               </span>
             </div>
