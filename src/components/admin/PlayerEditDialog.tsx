@@ -47,6 +47,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const groups = [
     ...new Set([
       player.group,
+      "Skrzat 2020",
       "Żaki 2019",
       "Żaki 2018",
       "Orlik 2017",

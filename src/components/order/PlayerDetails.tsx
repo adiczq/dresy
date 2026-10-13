@@ -12,6 +12,7 @@ type PlayerDetailsProps = {
 };
 
 const trainingGroups = [
+  { value: "Skrzat 2020", label: "Skrzat 2020" },
   { value: "Żaki 2019", label: "Żaki 2019" },
   { value: "Żaki 2018", label: "Żaki 2018" },
   { value: "Orlik 2017", label: "Orlik 2017" },
