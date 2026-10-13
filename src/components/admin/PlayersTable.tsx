@@ -101,14 +101,18 @@ export default function PlayersTable({
   const players = groupByPlayer(rows);
 
   return (
-    <table className="w-full min-w-[1240px] text-left text-sm">
+    <table className="w-full min-w-[1050px] text-left text-sm">
       <thead className="bg-club-elevated text-xs text-white/45">
         <tr>
           <th className="px-5 py-4">Zawodnik</th>
           <th className="px-5 py-4">Grupa</th>
           <th className="px-5 py-4">Dres</th>
           <th className="px-5 py-4">Kurtka Joma</th>
-          <th className="px-5 py-4">Kurtka przeciwdeszczowa</th>
+          <th className="w-[95px] px-2 py-4 text-center leading-4">
+            Kurtka
+            <span className="block">przeciw-</span>
+            <span className="block">deszczowa</span>
+          </th>
           <th className="px-5 py-4">Kwota</th>
           <th className="px-5 py-4">Inicjały</th>
           <th className="px-5 py-4">Płatność</th>
@@ -145,7 +149,7 @@ export default function PlayersTable({
                 <ClothingCell item={player.jacket} />
               </td>
 
-              <td className="px-5 py-5">
+              <td className="px-2 py-5 text-center">
                 <ClothingCell item={player.basicJacket} />
               </td>
 
