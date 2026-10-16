@@ -219,10 +219,7 @@ export default function Home() {
             );
           })}
         </div>
-        <p className="mt-5 text-xs leading-6 text-white/45">
-          Numery katalogowe odzieży są uwzględniane w zestawieniu dla trenerów.
-          Spodnie i bluzę dobierzesz w niezależnych rozmiarach.
-        </p>
+
         {galleryProduct && (
           <ProductGallery
             product={galleryProduct}

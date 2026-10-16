@@ -140,11 +140,6 @@ export default function ClothingSizes({
           Wróć do kalkulatora rozmiarów
         </a>
       )}
-
-      <p className="text-xs leading-6 text-white/40">
-        Rozmiary są orientacyjne. Poszczególne elementy pakietu mogą różnić się
-        krojem.
-      </p>
     </div>
   );
 }

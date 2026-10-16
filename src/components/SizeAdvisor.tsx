@@ -349,10 +349,9 @@ export default function SizeAdvisor({
           <h2 className="text-3xl font-black tracking-tight uppercase md:text-5xl">
             Dobierz swój <span className="text-club-accent">rozmiar.</span>
           </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/55">
-            Wprowadź wymiary zawodnika i wybierz tabelę juniorską lub dorosłą.
-            Wskażemy orientacyjny rozmiar, który warto potwierdzić przy
-            przymiarce.
+
+          <p className="mt-4 text-sm text-white/55">
+            Wybierz kategorię i wprowadź wymiary zawodnika.
           </p>
         </div>
 
@@ -419,17 +418,7 @@ export default function SizeAdvisor({
                 </label>
               ))}
             </div>
-            <div className="mt-8 flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <Ruler size={19} className="text-club-accent mt-0.5 shrink-0" />
-              <p className="text-xs leading-6 text-white/55">
-                Mierz obwody miękką miarką bez nadmiernego ściskania.
-                {junior
-                  ? " Wzrost mierz na stojąco."
-                  : " Długość nogawki mierz od kroku wzdłuż wewnętrznej strony nogi."}{" "}
-                Wynik jest orientacyjny — przed zamówieniem warto przymierzyć
-                konkretny model.
-              </p>
-            </div>
+
             <button
               type="button"
               onClick={() => setValues(INITIAL_VALUES)}
@@ -581,9 +570,9 @@ export default function SizeAdvisor({
                   )}
               </div>
             )}
-            <p className="mt-7 border-t border-white/10 pt-5 text-xs leading-6 text-white/40">
-              Rekomendacja jest orientacyjna. Dopasowanie zależy od kroju,
-              preferowanego luzu i rzeczywistych wymiarów odzieży.
+
+            <p className="mt-5 border-t border-white/10 pt-4 text-xs text-white/45">
+              Sugerowany rozmiar warto potwierdzić przymiarką.
             </p>
           </div>
         </div>
