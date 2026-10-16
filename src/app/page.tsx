@@ -236,10 +236,22 @@ export default function Home() {
         recommendation={recommendation}
       />
       <OrderGuide />
+
       <footer className="bg-club-bg border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 px-5 py-8 text-xs text-white/40 md:flex-row md:px-8">
-          <span>© 2026 Górnik Radlin — zamówienia klubowe</span>
-          <span>Projekt w przygotowaniu · ADICZQ</span>
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-6 text-center text-xs text-white/40 md:flex-row md:px-8">
+          <span>© 2026 Górnik Radlin · Zamówienia klubowe</span>
+
+          <span>
+            Projekt i realizacja{" "}
+            <a
+              href="https://adiczq.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-club-accent font-semibold text-white/60 transition"
+            >
+              ADICZQ
+            </a>
+          </span>
         </div>
       </footer>
     </main>
