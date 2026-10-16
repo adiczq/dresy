@@ -7,12 +7,7 @@ import SizeAdvisor, { type SizeRecommendation } from "@/components/SizeAdvisor";
 import OrderForm from "@/components/OrderForm";
 import ProductGallery from "@/components/ProductGallery";
 import OrderGuide from "@/components/OrderGuide";
-import {
-  PACKAGES,
-  PRODUCTS,
-  formatPrice,
-  type PackageId,
-} from "@/lib/products";
+import { PACKAGES, formatPrice, type PackageId } from "@/lib/products";
 
 export default function Home() {
   const [selectedPackage, setSelectedPackage] =
