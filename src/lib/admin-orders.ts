@@ -5,7 +5,7 @@ import type { Document } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
 
-import { PRODUCT_IDS, type ProductId } from "@/lib/products";
+import { PRODUCT_IDS, type ProductId, type PackageId } from "@/lib/products";
 
 type StoredItem = {
   productId: ProductId;
@@ -16,6 +16,9 @@ type StoredItem = {
 
 type StoredPlayer = {
   deletedAt?: Date | null;
+  packageId?: PackageId;
+  packagePrice?: number;
+  catalogPrice?: number;
   paymentStatus?: "paid" | "unpaid";
   playerName: string;
   group: string;
@@ -39,6 +42,9 @@ interface StoredOrder extends Document {
 
 export type AdminOrderRow = {
   playerIndex: number;
+  packageId: PackageId | null;
+  packagePrice: number | null;
+  catalogPrice: number | null;
   paymentStatus: "paid" | "unpaid";
   id: string;
   playerKey: string;
@@ -112,6 +118,9 @@ export async function getAdminOrders() {
         return [
           {
             id: `${playerKey}:${item.productId}`,
+            packageId: player.packageId ?? null,
+            packagePrice: typeof player.packagePrice === "number" ? player.packagePrice : null,
+            catalogPrice: typeof player.catalogPrice === "number" ? player.catalogPrice : null,
             playerKey,
             playerIndex,
             paymentStatus: player.paymentStatus === "paid" ? "paid" : "unpaid",

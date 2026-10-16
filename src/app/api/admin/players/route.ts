@@ -21,6 +21,8 @@ const editSchema = z
       .max(6)
       .regex(/^[\p{L}0-9]*$/u),
     tracksuitSize: z.enum(sizes).optional(),
+    pantsSize: z.enum(sizes).optional(),
+    sweatshirtSize: z.enum(sizes).optional(),
     jacketSize: z.enum(sizes).optional(),
     basicJacketSize: z.enum(sizes).optional(),
   })
@@ -160,13 +162,12 @@ export async function PATCH(request: NextRequest) {
 
     for (const [index, item] of items.entries()) {
       const nextSize =
-        item.productId === "tracksuit"
-          ? data.tracksuitSize
-          : item.productId === "jacket"
-            ? data.jacketSize
-            : item.productId === "jacket_basic"
-              ? data.basicJacketSize
-              : undefined;
+        item.productId === "tracksuit" ? data.tracksuitSize
+          : item.productId === "pants" ? data.pantsSize
+          : item.productId === "sweatshirt" ? data.sweatshirtSize
+          : item.productId === "jacket" ? data.jacketSize
+          : item.productId === "jacket_basic" ? data.basicJacketSize
+          : undefined;
 
       if (!nextSize) {
         return NextResponse.json(

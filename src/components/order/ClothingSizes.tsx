@@ -1,100 +1,149 @@
-import { Ruler } from "lucide-react";
+import { Check, Ruler } from "lucide-react";
 import type { SizeRecommendation } from "@/components/SizeAdvisor";
+import { PACKAGES, PRODUCTS, type PackageId } from "@/lib/products";
 import SizePicker from "./SizePicker";
 
-type ClothingSizesProps = {
-  idPrefix?: string;
-  showSizeAdvisorLink?: boolean;
-  hasTracksuit: boolean;
-  hasJacket: boolean;
-  hasBasicJacket: boolean;
-  tracksuitSize: string;
+type Props = {
+  idPrefix: string;
+  packageId: PackageId;
+  pantsSize: string;
+  sweatshirtSize: string;
   jacketSize: string;
-  basicJacketSize: string;
-  suggestedTracksuit: string | null;
-  suggestedJacket: string | null;
-  setManualTracksuitSize: (value: string) => void;
-  setManualJacketSize: (value: string) => void;
-  setManualBasicJacketSize: (value: string) => void;
-  recommendation: SizeRecommendation;
+  setPantsSize: (value: string) => void;
+  setSweatshirtSize: (value: string) => void;
+  setJacketSize: (value: string) => void;
+  recommendation?: SizeRecommendation;
 };
 
 export default function ClothingSizes({
-  idPrefix = "player-1",
-  showSizeAdvisorLink = true,
-  hasTracksuit,
-  hasJacket,
-  hasBasicJacket,
-  tracksuitSize,
+  idPrefix,
+  packageId,
+  pantsSize,
+  sweatshirtSize,
   jacketSize,
-  basicJacketSize,
-  suggestedTracksuit,
-  suggestedJacket,
-  setManualTracksuitSize,
-  setManualJacketSize,
-  setManualBasicJacketSize,
+  setPantsSize,
+  setSweatshirtSize,
+  setJacketSize,
   recommendation,
-}: ClothingSizesProps) {
+}: Props) {
+  const jacket = PACKAGES[packageId].jacketId;
+
+  const suggestedTop = recommendation?.ready ? recommendation.top : null;
+
+  const suggestedBottom = recommendation?.ready ? recommendation.bottom : null;
+
+  const selectedCount = [pantsSize, sweatshirtSize, jacketSize].filter(
+    Boolean,
+  ).length;
+
+  const sizes = [
+    {
+      id: `${idPrefix}-pants`,
+      label: "Spodnie",
+      value: pantsSize,
+      suggestion: suggestedBottom,
+      onChange: setPantsSize,
+    },
+    {
+      id: `${idPrefix}-sweatshirt`,
+      label: "Bluza",
+      value: sweatshirtSize,
+      suggestion: suggestedTop,
+      onChange: setSweatshirtSize,
+    },
+    {
+      id: `${idPrefix}-jacket`,
+      label: PRODUCTS[jacket].label,
+      value: jacketSize,
+      suggestion: suggestedTop,
+      onChange: setJacketSize,
+    },
+  ];
+
   return (
-    <div>
-      <div className="mb-5 flex items-center gap-3">
-        <Ruler size={21} className="text-club-accent" />
-        <h3 className="text-lg font-bold">Rozmiary odzieży</h3>
-      </div>
-      <div className="space-y-5">
-        {hasTracksuit && (
-          <SizePicker
-            id={`${idPrefix}-tracksuit-size`}
-            label="Rozmiar kompletu dresowego"
-            value={tracksuitSize}
-            suggestion={suggestedTracksuit}
-            onChange={setManualTracksuitSize}
-          />
-        )}
-        {hasJacket && (
-          <SizePicker
-            id={`${idPrefix}-jacket-size`}
-            label="Rozmiar kurtki Joma (120 zł)"
-            value={jacketSize}
-            suggestion={suggestedJacket}
-            onChange={setManualJacketSize}
-          />
-        )}
-        {hasBasicJacket && (
-          <SizePicker
-            id={`${idPrefix}-basic-jacket-size`}
-            label="Rozmiar kurtki ekonomicznej (80 zł)"
-            value={basicJacketSize}
-            suggestion={suggestedJacket}
-            onChange={setManualBasicJacketSize}
-          />
-        )}
-      </div>
-      {recommendation.hasDifferentSizes && hasTracksuit && (
-        <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-xs leading-6 text-amber-100">
-          Uwaga: kalkulator wskazuje inny rozmiar góry ({recommendation.top}) i
-          spodni ({recommendation.bottom}). Rozmiar kompletu wybierz ręcznie po
-          sprawdzeniu dopasowania.
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Ruler size={21} className="text-club-accent" />
+          <h3 className="text-lg font-bold">Rozmiary elementów pakietu</h3>
         </div>
+
+        <span
+          className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+            selectedCount === 3
+              ? "bg-club-accent/15 text-club-accent"
+              : "bg-white/10 text-white/65"
+          }`}
+        >
+          {selectedCount === 3
+            ? "✓ Komplet rozmiarów"
+            : `${selectedCount} z 3 wybranych`}
+        </span>
+      </div>
+
+      <div className="grid gap-3">
+        {sizes.map((item) => {
+          const selected = Boolean(item.value);
+
+          return (
+            <div
+              key={item.id}
+              className={`rounded-2xl border p-4 transition-colors ${
+                selected
+                  ? "border-club-accent/50 bg-club-accent/5"
+                  : "bg-club-bg/40 border-white/10"
+              }`}
+            >
+              <div className="mb-3 flex items-center justify-end">
+                {selected ? (
+                  <div className="text-club-accent flex items-center gap-1.5 text-xs font-semibold">
+                    <Check size={15} />
+                    Wybrano: {item.value}
+                  </div>
+                ) : (
+                  <span className="text-xs text-white/40">Wybierz rozmiar</span>
+                )}
+              </div>
+
+              <SizePicker
+                id={item.id}
+                label={item.label}
+                value={item.value}
+                suggestion={item.suggestion}
+                onChange={item.onChange}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {recommendation?.hasDifferentSizes && (
+        <p className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-xs leading-6 text-amber-100">
+          Kalkulator wskazuje różne rozmiary góry i spodni. Wybierz osobno
+          rozmiar każdego elementu pakietu.
+        </p>
       )}
-      {recommendation.needsConsultation && (
-        <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-xs leading-6 text-amber-100">
-          Niektóre wymiary są poza dostarczoną tabelą Joma. Przed zamówieniem
-          potwierdź rozmiar z dostawcą.
-        </div>
+
+      {recommendation?.needsConsultation && (
+        <p className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-xs leading-6 text-amber-100">
+          Część pomiarów wymaga konsultacji. Przed zamówieniem sprawdź
+          dopasowanie odzieży.
+        </p>
       )}
-      {showSizeAdvisorLink && (
+
+      {recommendation && (
         <a
           href="#rozmiary"
-          className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-club-accent hover:underline"
+          className="text-club-accent inline-flex items-center gap-2 text-xs font-semibold hover:underline"
         >
           <Ruler size={15} />
           Wróć do kalkulatora rozmiarów
         </a>
       )}
-      <p className="mt-3 text-xs leading-6 text-white/40">
-        Rozmiary są orientacyjne. Krój obu kurtek może różnić się od kompletu
-        dresowego i od siebie nawzajem. Przed zakupem potwierdź dopasowanie.
+
+      <p className="text-xs leading-6 text-white/40">
+        Rozmiary są orientacyjne. Poszczególne elementy pakietu mogą różnić się
+        krojem.
       </p>
     </div>
   );

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import { getPlayerInitials } from "@/lib/initials";
-import { PRODUCTS, formatPrice, getLinePrice, getOrderPrice } from "@/lib/products";
+import { PRODUCTS, PACKAGES, formatPrice, getOrderPrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
 type Props = {
@@ -32,7 +32,10 @@ export default function OrderSummary({
   saveOrder,
 }: Props) {
   return (
-    <aside className="rounded-3xl border border-club-accent/20 bg-club-surface p-6 lg:sticky lg:top-28">
+    <aside
+      id="podsumowanie"
+      className="border-club-accent/20 bg-club-surface scroll-mt-5 rounded-3xl border p-6 lg:sticky lg:top-28"
+    >
       <div className="mb-5 flex items-center gap-3">
         <ClipboardCheck size={23} className="text-club-accent" />
         <h3 className="text-xl font-black">Podsumowanie</h3>
@@ -40,12 +43,12 @@ export default function OrderSummary({
 
       {showPreview ? (
         <div className="space-y-5">
-          <div className="flex items-center gap-2 text-sm font-bold text-club-accent">
+          <div className="text-club-accent flex items-center gap-2 text-sm font-bold">
             <CheckCircle2 size={19} />
             Gotowe do zapisania
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-white/10 bg-club-bg/60 p-5 text-sm">
+          <div className="bg-club-bg/60 space-y-4 rounded-2xl border border-white/10 p-5 text-sm">
             {players.map((player, index) => (
               <div
                 key={index}
@@ -62,17 +65,20 @@ export default function OrderSummary({
                     : getPlayerInitials(player.playerName)}
                 </p>
 
+                <p className="text-club-accent font-bold">
+                  {PACKAGES[player.packageId].label}
+                </p>
                 {player.items.map((item) => (
                   <div
                     key={item.productId}
                     className="flex flex-wrap justify-between gap-2 text-white/70"
                   >
-                    <span>{PRODUCTS[item.productId].shortLabel} · {item.size}</span>
-                    <strong className="text-club-accent">{formatPrice(getLinePrice(item))}</strong>
+                    <span>{PRODUCTS[item.productId].shortLabel}</span>
+                    <span className="font-semibold">{item.size}</span>
                   </div>
                 ))}
-                <p className="text-right text-xs font-semibold text-white/65">
-                  Za zawodnika: {formatPrice(player.items.reduce((sum, item) => sum + getLinePrice(item), 0))}
+                <p className="text-club-accent text-right text-sm font-bold">
+                  Za zawodnika: {formatPrice(PACKAGES[player.packageId].price)}
                 </p>
               </div>
             ))}
@@ -80,7 +86,9 @@ export default function OrderSummary({
             <p className="pt-2 text-white/55">Opiekun: {parentName}</p>
             <p className="flex items-center justify-between gap-2 border-t border-white/15 pt-4 font-black">
               <span>Łącznie do zapłaty</span>
-              <span className="text-lg text-club-accent">{formatPrice(getOrderPrice(players))}</span>
+              <span className="text-club-accent text-lg">
+                {formatPrice(getOrderPrice(players))}
+              </span>
             </p>
           </div>
 
@@ -103,7 +111,7 @@ export default function OrderSummary({
             type="button"
             onClick={saveOrder}
             disabled={isSaving}
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-club-primary px-6 py-4 text-sm font-extrabold text-club-on-primary hover:bg-club-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-club-primary text-club-on-primary hover:bg-club-primary-hover flex w-full items-center justify-center gap-3 rounded-xl px-6 py-4 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? "Zapisywanie..." : "Zapisz zgłoszenie"}
             <ArrowRight size={18} />
@@ -123,11 +131,11 @@ export default function OrderSummary({
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-club-bg/50 p-6 text-center">
+        <div className="bg-club-bg/50 rounded-2xl border border-white/10 p-6 text-center">
           <ShoppingBag
             size={42}
             strokeWidth={1.3}
-            className="mx-auto mb-4 text-club-accent/50"
+            className="text-club-accent/50 mx-auto mb-4"
           />
 
           <p className="text-sm leading-7 text-white/55">
@@ -136,7 +144,7 @@ export default function OrderSummary({
           <p className="mt-4 text-sm font-semibold text-white/70">
             Wartość wybranych produktów
           </p>
-          <p className="mt-1 text-2xl font-black text-club-accent">
+          <p className="text-club-accent mt-1 text-2xl font-black">
             {formatPrice(getOrderPrice(players))}
           </p>
         </div>

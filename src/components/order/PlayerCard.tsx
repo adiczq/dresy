@@ -1,175 +1,70 @@
 "use client";
 
-import { Shirt, Trash2, Wind } from "lucide-react";
-
+import { Trash2 } from "lucide-react";
 import type { SizeRecommendation } from "@/components/SizeAdvisor";
+import { PACKAGES, formatPrice } from "@/lib/products";
 import ClothingSizes from "./ClothingSizes";
 import PlayerDetails from "./PlayerDetails";
-import type { PlayerDraft, ProductId } from "./types";
-import { PRODUCTS, formatPrice } from "@/lib/products";
+import type { PlayerDraft } from "./types";
 
-type PlayerCardProps = {
-  showProductSelector?: boolean;
+type Props = {
   player: PlayerDraft;
   index: number;
   recommendation?: SizeRecommendation;
+  showPackageSelector?: boolean;
   onChange: (changes: Partial<PlayerDraft>) => void;
   onRemove?: () => void;
 };
 
-const emptyRecommendation: SizeRecommendation = {
-  top: null,
-  bottom: null,
-  set: null,
-  ready: false,
-  hasDifferentSizes: false,
-  needsConsultation: false,
-};
-
-export default function PlayerCard({
-  showProductSelector = true,
-  player,
-  index,
-  recommendation,
-  onChange,
-  onRemove,
-}: PlayerCardProps) {
-  const hasTracksuit = player.products.includes("tracksuit");
-  const hasJacket = player.products.includes("jacket");
-  const hasBasicJacket = player.products.includes("jacket_basic");
-
-  const suggestedTracksuit = recommendation?.ready ? recommendation.set : null;
-
-  const suggestedJacket = recommendation?.ready ? recommendation.top : null;
-
-  const automaticTracksuitSize = recommendation?.hasDifferentSizes
-    ? null
-    : suggestedTracksuit;
-
-  const tracksuitSize =
-    player.manualTracksuitSize || automaticTracksuitSize || "";
-
-  const jacketSize = player.manualJacketSize || suggestedJacket || "";
-  const basicJacketSize = player.manualBasicJacketSize || suggestedJacket || "";
-
-  function toggleProduct(id: ProductId) {
-    const products = player.products.includes(id)
-      ? player.products.filter((product) => product !== id)
-      : [...player.products, id];
-
-    onChange({ products });
-  }
-
-  const products = [
-    {
-      id: "tracksuit" as ProductId,
-      label: "Komplet dresowy",
-      Icon: Shirt,
-    },
-    {
-      id: "jacket" as ProductId,
-      label: "Kurtka Joma",
-      Icon: Wind,
-    },
-    {
-      id: "jacket_basic" as ProductId,
-      label: "Kurtka ekonomiczna",
-      Icon: Wind,
-    },
-  ];
+export default function PlayerCard({player, index, recommendation, showPackageSelector = true, onChange, onRemove}: Props) {
+  const suggestedTop = recommendation?.ready ? recommendation.top : null;
+  const suggestedBottom = recommendation?.ready ? recommendation.bottom : null;
 
   return (
     <div className="w-full min-w-0 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-club-accent text-xs font-bold tracking-widest uppercase">
-            Zawodnik {index + 1}
-          </p>
-          <h3 className="mt-1 text-lg font-black">
-            {player.playerName.trim() || "Nowy zawodnik"}
-          </h3>
+          <p className="text-club-accent text-xs font-bold tracking-widest uppercase">Zawodnik {index + 1}</p>
+          <h3 className="mt-1 text-lg font-black">{player.playerName.trim() || "Nowy zawodnik"}</h3>
         </div>
-
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="flex items-center gap-2 rounded-lg border border-red-400/20 px-3 py-2 text-xs text-red-300 transition hover:bg-red-400/10"
-          >
-            <Trash2 size={15} />
-            Usuń
-          </button>
-        )}
+        {onRemove && <button type="button" onClick={onRemove} className="flex items-center gap-2 rounded-lg border border-red-400/20 px-3 py-2 text-xs text-red-300 transition hover:bg-red-400/10"><Trash2 size={15}/> Usuń</button>}
       </div>
-
       <PlayerDetails
-        idPrefix={player.id}
-        playerName={player.playerName}
-        setPlayerName={(playerName) => onChange({ playerName })}
-        group={player.group}
-        setGroup={(group) => onChange({ group })}
-        noInitials={player.noInitials}
-        setNoInitials={(noInitials) => onChange({ noInitials })}
+        idPrefix={player.id} playerName={player.playerName}
+        setPlayerName={(playerName) => onChange({playerName})}
+        group={player.group} setGroup={(group) => onChange({group})}
+        noInitials={player.noInitials} setNoInitials={(noInitials) => onChange({noInitials})}
       />
-      {showProductSelector && (
-        <div className="border-t border-white/10 pt-6">
-          <h4 className="mb-4 text-sm font-bold">
-            Co zamawiamy dla tego zawodnika?
-          </h4>
-
+      {showPackageSelector ? (
+        <div className="space-y-3 border-t border-white/10 pt-6">
+          <h4 className="text-sm font-bold">Pakiet dla tego zawodnika</h4>
           <div className="grid gap-3 sm:grid-cols-2">
-            {products.map(({ id, label, Icon }) => {
-              const active = player.products.includes(id);
-
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleProduct(id)}
-                  className={`flex items-center justify-between rounded-xl border p-4 text-sm font-semibold transition ${
-                    active
-                      ? "border-club-accent bg-club-accent/10 text-club-accent"
-                      : "bg-club-bg border-white/15 text-white/70 hover:border-white/40"
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <Icon size={20} className="shrink-0" />
-                    <span>{label} <span className="whitespace-nowrap opacity-80">({formatPrice(PRODUCTS[id].price)})</span></span>
-                  </span>
-                  <span>{active ? "✓" : "+"}</span>
-                </button>
-              );
-            })}
+            {(["package_1", "package_2"] as const).map((id) => (
+              <button key={id} type="button" aria-pressed={player.packageId === id}
+                onClick={() => onChange({packageId: id, manualJacketSize: ""})}
+                className={`rounded-xl border p-4 text-left text-sm font-semibold ${player.packageId === id ? "border-club-accent bg-club-accent/10 text-club-accent" : "border-white/15 bg-club-bg text-white/70"}`}>
+                {PACKAGES[id].label} — {formatPrice(PACKAGES[id].price)}
+              </button>
+            ))}
           </div>
         </div>
+      ) : (
+        <p className="border-t border-white/10 pt-5 text-sm font-semibold text-club-accent">
+          {PACKAGES[player.packageId].label} · {formatPrice(PACKAGES[player.packageId].price)}
+        </p>
       )}
-      {(hasTracksuit || hasJacket || hasBasicJacket) && (
-        <div className="border-t border-white/10 pt-6">
-          <ClothingSizes
-            idPrefix={player.id}
-            hasTracksuit={hasTracksuit}
-            hasJacket={hasJacket}
-            hasBasicJacket={hasBasicJacket}
-            tracksuitSize={tracksuitSize}
-            jacketSize={jacketSize}
-            basicJacketSize={basicJacketSize}
-            suggestedTracksuit={suggestedTracksuit}
-            suggestedJacket={suggestedJacket}
-            setManualTracksuitSize={(manualTracksuitSize) =>
-              onChange({ manualTracksuitSize })
-            }
-            setManualJacketSize={(manualJacketSize) =>
-              onChange({ manualJacketSize })
-            }
-            setManualBasicJacketSize={(manualBasicJacketSize) =>
-              onChange({ manualBasicJacketSize })
-            }
-            recommendation={recommendation ?? emptyRecommendation}
-            showSizeAdvisorLink={Boolean(recommendation)}
-          />
-        </div>
-      )}
+      <div className="border-t border-white/10 pt-6">
+        <ClothingSizes
+          idPrefix={player.id} packageId={player.packageId}
+          pantsSize={player.manualPantsSize || suggestedBottom || ""}
+          sweatshirtSize={player.manualSweatshirtSize || suggestedTop || ""}
+          jacketSize={player.manualJacketSize || suggestedTop || ""}
+          setPantsSize={(manualPantsSize) => onChange({manualPantsSize})}
+          setSweatshirtSize={(manualSweatshirtSize) => onChange({manualSweatshirtSize})}
+          setJacketSize={(manualJacketSize) => onChange({manualJacketSize})}
+          recommendation={recommendation}
+        />
+      </div>
     </div>
   );
 }

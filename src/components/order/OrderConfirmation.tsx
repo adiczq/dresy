@@ -1,7 +1,7 @@
 import { CheckCircle2, Copy } from "lucide-react";
 
 import { getPlayerInitials } from "@/lib/initials";
-import { PRODUCTS, formatPrice, getLinePrice } from "@/lib/products";
+import { PRODUCTS, PACKAGES, formatPrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
 type Props = {
@@ -36,8 +36,9 @@ export default function OrderConfirmation({
           : getPlayerInitials(player.playerName)
       }`,
 
+      `Pakiet: ${PACKAGES[player.packageId].label} — ${formatPrice(PACKAGES[player.packageId].price)}`,
       ...player.items.map((item) =>
-        `${PRODUCTS[item.productId].shortLabel}: ${item.size} × ${item.quantity} — ${formatPrice(getLinePrice(item))}`,
+        `${PRODUCTS[item.productId].shortLabel}: ${item.size}`,
       ),
     ]),
 
@@ -61,7 +62,7 @@ export default function OrderConfirmation({
         </h2>
 
         <p className="mt-3 text-sm leading-7 text-white/55">
-          Wszystkie wybrane produkty trafiły na listę klubową.
+          Wybrane pakiety trafiły na listę klubową.
         </p>
 
         <div className="mt-8 rounded-2xl border border-club-accent/25 bg-club-accent/10 p-6">
@@ -89,18 +90,14 @@ export default function OrderConfirmation({
                   : getPlayerInitials(player.playerName)}
               </p>
 
+              <p className="font-semibold text-club-accent">{PACKAGES[player.packageId].label}</p>
               {player.items.map((item) => (
-                <div
-                  key={item.productId}
-                  className="flex justify-between gap-3"
-                >
-                  <span className="text-white/65">
-                    {PRODUCTS[item.productId].shortLabel} · {item.size}
-                  </span>
-
-                  <span className="font-bold text-club-accent">{formatPrice(getLinePrice(item))}</span>
+                <div key={item.productId} className="flex justify-between gap-3">
+                  <span className="text-white/65">{PRODUCTS[item.productId].shortLabel}</span>
+                  <span className="font-semibold">{item.size}</span>
                 </div>
               ))}
+              <p className="text-right font-bold text-club-accent">{formatPrice(PACKAGES[player.packageId].price)}</p>
             </div>
           ))}
 

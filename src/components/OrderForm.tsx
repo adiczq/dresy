@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, Info, UserRoundPlus } from "lucide-react";
 
 import OrderConfirmation from "@/components/order/OrderConfirmation";
@@ -16,10 +16,10 @@ import type {
 } from "@/components/order/types";
 
 import { getPlayerInitials } from "@/lib/initials";
-import { PRODUCTS, formatPrice, getLinePrice, getOrderPrice } from "@/lib/products";
+import { PACKAGES, PRODUCTS, formatPrice, getOrderPrice } from "@/lib/products";
 
 export default function OrderForm({
-  selectedProducts,
+  selectedPackage,
   recommendation,
 }: OrderFormProps) {
   const [players, setPlayers] = useState<PlayerDraft[]>([
@@ -28,10 +28,10 @@ export default function OrderForm({
       playerName: "",
       group: "",
       noInitials: false,
-      products: selectedProducts,
-      manualTracksuitSize: "",
+      packageId: selectedPackage,
+      manualPantsSize: "",
+      manualSweatshirtSize: "",
       manualJacketSize: "",
-      manualBasicJacketSize: "",
     },
   ]);
 
@@ -39,64 +39,68 @@ export default function OrderForm({
   const [phone, setPhone] = useState("");
 
   const [showPreview, setShowPreview] = useState(false);
+  const [previewPackage, setPreviewPackage] = useState(selectedPackage);
   const [formError, setFormError] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    if (!showPreview || previewPackage !== selectedPackage) return;
+
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    const element = document.getElementById("podsumowanie");
+
+    if (!element) return;
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    element.scrollIntoView({
+      behavior: reducedMotion ? "instant" : "smooth",
+      block: "start",
+    });
+  }, [showPreview, previewPackage, selectedPackage]);
 
   const [savedOrder, setSavedOrder] = useState<{
     reference: string;
     totalPrice: number;
   } | null>(null);
 
-  // Produkty pierwszego zawodnika wybieramy
-  // w głównej sekcji produktów na stronie.
+  // Pierwszy zawodnik korzysta z pakietu wybranego na górze strony.
   const currentPlayers = players.map((player, index) =>
-    index === 0 ? { ...player, products: selectedProducts } : player,
+    index === 0 ? { ...player, packageId: selectedPackage } : player,
   );
 
-  // Przygotowanie osobnych produktów i rozmiarów.
   const orderPlayers: OrderPlayer[] = currentPlayers.map((player, index) => {
-    const isFirst = index === 0;
-
-    const suggestedSet =
-      isFirst && recommendation.ready && !recommendation.hasDifferentSizes
-        ? recommendation.set
-        : null;
-
-    const suggestedJacket =
-      isFirst && recommendation.ready ? recommendation.top : null;
-
-    const items: OrderItem[] = [];
-
-    if (player.products.includes("tracksuit")) {
-      items.push({
-        productId: "tracksuit",
-        size: player.manualTracksuitSize || suggestedSet || "",
+    const first = index === 0;
+    const top = first && recommendation.ready ? recommendation.top : null;
+    const bottom = first && recommendation.ready ? recommendation.bottom : null;
+    const pack = PACKAGES[player.packageId];
+    const items: OrderItem[] = [
+      {
+        productId: "pants",
+        size: player.manualPantsSize || bottom || "",
         quantity: 1,
-      });
-    }
-
-    if (player.products.includes("jacket")) {
-      items.push({
-        productId: "jacket",
-        size: player.manualJacketSize || suggestedJacket || "",
+      },
+      {
+        productId: "sweatshirt",
+        size: player.manualSweatshirtSize || top || "",
         quantity: 1,
-      });
-    }
-
-    if (player.products.includes("jacket_basic")) {
-      items.push({
-        productId: "jacket_basic",
-        size: player.manualBasicJacketSize || suggestedJacket || "",
+      },
+      {
+        productId: pack.jacketId,
+        size: player.manualJacketSize || top || "",
         quantity: 1,
-      });
-    }
-
+      },
+    ];
     return {
       playerName: player.playerName.trim(),
       group: player.group.trim(),
       noInitials: player.noInitials,
+      packageId: player.packageId,
       items,
     };
   });
@@ -123,10 +127,10 @@ export default function OrderForm({
         playerName: "",
         group: "",
         noInitials: false,
-        products: [],
-        manualTracksuitSize: "",
+        packageId: selectedPackage,
+        manualPantsSize: "",
+        manualSweatshirtSize: "",
         manualJacketSize: "",
-      manualBasicJacketSize: "",
       },
     ]);
 
@@ -156,8 +160,8 @@ export default function OrderForm({
         return `Uzupełnij imię, nazwisko i grupę zawodnika ${index + 1}.`;
       }
 
-      if (player.items.length === 0) {
-        return `Wybierz odzież dla zawodnika ${index + 1}.`;
+      if (player.items.length !== 3) {
+        return `Wybierz pakiet dla zawodnika ${index + 1}.`;
       }
 
       if (player.items.some((item) => !item.size)) {
@@ -178,6 +182,7 @@ export default function OrderForm({
     setCopyStatus("");
 
     if (!error) {
+      setPreviewPackage(selectedPackage);
       setShowPreview(true);
     }
   }
@@ -199,10 +204,11 @@ export default function OrderForm({
           : getPlayerInitials(player.playerName)
       }`,
 
-      ...player.items.map((item) =>
-        `${PRODUCTS[item.productId].shortLabel}: ${item.size} × ${item.quantity} — ${formatPrice(getLinePrice(item))}`,
+      `Pakiet: ${PACKAGES[player.packageId].label}`,
+      ...player.items.map(
+        (item) => `${PRODUCTS[item.productId].shortLabel}: ${item.size}`,
       ),
-      `Razem za zawodnika: ${formatPrice(player.items.reduce((sum, item) => sum + getLinePrice(item), 0))}`,
+      `Razem za zawodnika: ${formatPrice(PACKAGES[player.packageId].price)}`,
     ]),
 
     "",
@@ -221,6 +227,12 @@ export default function OrderForm({
 
   async function saveOrder() {
     if (isSaving || savedOrder) return;
+    if (previewPackage !== selectedPackage) {
+      setSaveError(
+        "Zmieniono pakiet. Sprawdź zgłoszenie ponownie przed zapisem.",
+      );
+      return;
+    }
 
     const error = validate();
 
@@ -301,7 +313,8 @@ export default function OrderForm({
           </h2>
 
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/55">
-            Wpisz zawodników i ich rozmiary. Dane opiekuna wystarczy podać raz.
+            Wybierz pakiet i trzy rozmiary dla każdego zawodnika. Dane opiekuna
+            wystarczy podać raz.
           </p>
         </div>
 
@@ -319,7 +332,7 @@ export default function OrderForm({
                   player={player}
                   index={index}
                   recommendation={index === 0 ? recommendation : undefined}
-                  showProductSelector={index !== 0}
+                  showPackageSelector={index !== 0}
                   onChange={(changes) => updatePlayer(player.id, changes)}
                   onRemove={
                     index > 0
@@ -388,7 +401,7 @@ export default function OrderForm({
           <OrderSummary
             players={orderPlayers}
             parentName={parentName}
-            showPreview={showPreview}
+            showPreview={showPreview && previewPackage === selectedPackage}
             isSaving={isSaving}
             saveError={saveError}
             copyStatus={copyStatus}

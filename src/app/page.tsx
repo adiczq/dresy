@@ -1,45 +1,25 @@
 "use client";
-import OrderForm from "@/components/OrderForm";
-import SizeAdvisor, { type SizeRecommendation } from "@/components/SizeAdvisor";
-import { useState } from "react";
-import { ArrowRight, Check, ShoppingBag } from "lucide-react";
-import { PRODUCTS, formatPrice, type ProductId } from "@/lib/products";
-import Image from "next/image";
-import ProductGallery from "@/components/ProductGallery";
 
-const products = [
-  {
-    id: "tracksuit" as ProductId,
-    number: "01",
-    name: "Komplet dresowy",
-    model: "JOMA ACADEMY IV",
-    description:
-      "Bluza i spodnie treningowe. Wygodny komplet na treningi, mecze i wyjazdy klubowe.",
-    items: ["Bluza", "Spodnie"],
-  },
-  {
-    id: "jacket" as ProductId,
-    number: "02",
-    name: "Kurtka treningowa",
-    model: "JOMA 105301.700",
-    description:
-      "Dodatkowa warstwa na chłodniejsze dni, treningi i mecze wyjazdowe.",
-    items: ["Kurtka"],
-  },
-  {
-    id: "jacket_basic" as ProductId,
-    number: "03",
-    name: "Kurtka przeciwdeszczowa",
-    model: "JOMA 104796.700",
-    description:
-      "Kurtka przeciwdeszczowa do treningów, meczów i wyjazdów klubowych.",
-    items: ["Kurtka"],
-  },
-];
+import { useState } from "react";
+import { ArrowRight, Check } from "lucide-react";
+import Image from "next/image";
+import SizeAdvisor, { type SizeRecommendation } from "@/components/SizeAdvisor";
+import OrderForm from "@/components/OrderForm";
+import ProductGallery from "@/components/ProductGallery";
+import OrderGuide from "@/components/OrderGuide";
+import {
+  PACKAGES,
+  PRODUCTS,
+  formatPrice,
+  type PackageId,
+} from "@/lib/products";
 
 export default function Home() {
-  const [galleryProduct, setGalleryProduct] = useState<ProductId | null>(null);
-  const [selected, setSelected] = useState<ProductId[]>(["tracksuit"]);
+  const [selectedPackage, setSelectedPackage] =
+    useState<PackageId>("package_1");
+  const [galleryProduct, setGalleryProduct] = useState<
+    "pants" | "sweatshirt" | "jacket" | "jacket_basic" | null
+  >(null);
   const [recommendation, setRecommendation] = useState<SizeRecommendation>({
     top: null,
     bottom: null,
@@ -48,14 +28,6 @@ export default function Home() {
     hasDifferentSizes: false,
     needsConsultation: false,
   });
-  const toggleProduct = (id: ProductId) => {
-    setSelected((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    );
-  };
-
   return (
     <main className="bg-club-bg min-h-screen text-white">
       {/* HERO */}
@@ -78,8 +50,8 @@ export default function Home() {
             </h1>
 
             <p className="mt-8 max-w-xl text-base leading-8 text-white/60">
-              Zamów odzież treningową Górnika Radlin. Wybierz produkty, dopasuj
-              rozmiar i złóż zamówienie bez zbędnych wiadomości i formularzy
+              Zamów odzież treningową Górnika Radlin. Wybierz pakiet, dopasuj
+              rozmiary i złóż zamówienie bez zbędnych wiadomości i formularzy
               papierowych.
             </p>
           </div>
@@ -113,151 +85,149 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRODUCTS */}
       <section
         id="produkty"
-        className="mx-auto max-w-7xl scroll-mt-28 px-5 py-20 md:px-8"
+        className="mx-auto max-w-7xl scroll-mt-20 px-5 py-16 md:px-8 md:py-20"
       >
-        <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <p className="text-club-accent mb-3 text-xs font-bold tracking-[0.25em]">
-              KOLEKCJA
-            </p>
-            <h2 className="text-3xl font-black tracking-tight uppercase md:text-5xl">
-              Wybierz odzież
-            </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-white/50">
-              Zaznacz produkty, które chcesz zamówić. Możesz wybrać komplet
-              dresowy i jedną lub obie kurtki — możesz wybrać dowolną
-              kombinację.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-white/55">
-            <ShoppingBag size={18} />
-            Wybrano:{" "}
-            <span className="text-club-accent font-bold">
-              {selected.length}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => {
-            const active = selected.includes(product.id);
-            const isTracksuit = product.id === "tracksuit";
+        <p className="text-club-accent mb-3 text-xs font-bold tracking-[0.25em]">
+          OFERTA KLUBOWA
+        </p>
+        <h2 className="text-3xl font-black tracking-tight uppercase md:text-5xl">
+          Wybierz pakiet
+        </h2>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60">
+          Wybierz jeden z dwóch kompletnych pakietów. Każdy obejmuje spodnie,
+          bluzę i kurtkę. Cena po dofinansowaniu to kwota do zapłaty przez
+          rodzica.
+        </p>
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          {(["package_1", "package_2"] as const).map((id) => {
+            const pack = PACKAGES[id];
+            const selected = selectedPackage === id;
 
             return (
-              <div key={product.id} className="group relative">
+              <div
+                key={id}
+                className={`bg-club-surface overflow-hidden rounded-3xl border ${
+                  selected ? "border-club-accent" : "border-white/15"
+                }`}
+              >
+                {/* Wybór pakietu */}
                 <button
                   type="button"
-                  onClick={() => toggleProduct(product.id)}
-                  aria-pressed={active}
-                  className={`flex h-full w-full flex-col overflow-hidden rounded-3xl border text-left transition-all duration-200 ${
-                    active
-                      ? "border-club-accent bg-club-elevated"
-                      : "bg-club-elevated border-white/10 hover:border-white/30"
-                  }`}
+                  aria-pressed={selected}
+                  onClick={() => setSelectedPackage(id)}
+                  className="w-full px-5 pt-5 text-left sm:px-7 sm:pt-7"
                 >
-                  {/* ZDJĘCIE PRODUKTU */}
-                  <div className="bg-club-surface relative flex h-64 items-center justify-center overflow-hidden border-b border-white/10">
-                    {/* NUMER PRODUKTU */}
-                    <div className="absolute top-6 left-6 z-10 text-sm font-bold tracking-widest text-white/35">
-                      {product.number} / JOMA
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-club-accent text-xs font-bold tracking-widest">
+                        JOMA / KOLEKCJA KLUBOWA
+                      </p>
+                      <h3 className="mt-2 text-2xl font-black">{pack.label}</h3>
                     </div>
 
-                    {/* ZAZNACZENIE */}
-                    <div className="absolute top-6 right-6 z-10">
-                      <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all ${
-                          active
-                            ? "border-club-primary bg-club-primary text-white"
-                            : "border-club-accent/70 bg-club-accent/10 text-club-accent"
-                        }`}
-                      >
-                        {active ? <Check size={19} /> : null}
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 ${
+                        selected
+                          ? "border-club-primary bg-club-primary"
+                          : "border-club-accent/70 bg-club-accent/10"
+                      }`}
+                    >
+                      {selected && <Check size={19} />}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-2">
+                    <div>
+                      <p className="text-xs text-white/50">
+                        Cena po dofinansowaniu
+                      </p>
+                      <p className="text-club-accent text-4xl font-black">
+                        {formatPrice(pack.price)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-white/50">Cena katalogowa</p>
+                      <p className="text-xl font-semibold text-white/55 line-through">
+                        {formatPrice(pack.catalogPrice)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs text-white/55">
+                    Dofinansowanie:{" "}
+                    {formatPrice(pack.catalogPrice - pack.price)}
+                  </p>
+                </button>
+
+                {/* Zdjęcia — kliknięcie otwiera galerię */}
+                <div className="mt-6 grid grid-cols-3 gap-2 px-5 sm:gap-3 sm:px-7">
+                  {[
+                    {
+                      id: "pants" as const,
+                      label: "Spodnie",
+                      image: "/images/100761.331_1.png",
+                    },
+                    {
+                      id: "sweatshirt" as const,
+                      label: "Bluza",
+                      image: "/images/100947.703_1.png",
+                    },
+                    {
+                      id: pack.jacketId,
+                      label: id === "package_1" ? "Ortalion I" : "Ortalion II",
+                      image:
+                        id === "package_1"
+                          ? "/images/104796.700_1.png"
+                          : "/images/105301.700_1.png",
+                    },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setGalleryProduct(item.id)}
+                      aria-label={`Zobacz zdjęcia: ${item.label}`}
+                      className="group bg-club-bg hover:border-club-accent/60 hover:bg-club-accent/5 focus-visible:outline-club-accent flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl border border-white/10 p-2 text-center transition focus-visible:outline-2"
+                    >
+                      <div className="relative h-24 w-full">
+                        <Image
+                          src={item.image}
+                          alt={item.label}
+                          fill
+                          sizes="(max-width: 640px) 30vw, 180px"
+                          className="object-contain transition-transform duration-200 group-hover:scale-105"
+                        />
                       </div>
-                    </div>
 
-                    <Image
-                      src={
-                        product.id === "tracksuit"
-                          ? "/images/joma-academy-iv_1.png"
-                          : product.id === "jacket"
-                            ? "/images/105301.700_1.png"
-                            : "/images/104796.700_1.png"
-                      }
-                      alt={product.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* INFORMACJE O PRODUKCIE */}
-                  <div className="flex w-full flex-1 flex-col p-7">
-                    <p className="text-club-accent text-xs font-bold tracking-[0.2em]">
-                      {product.model}
-                    </p>
-
-                    <div className="mt-3 grid min-h-[68px] grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                      <h3 className="min-w-0 text-xl leading-tight font-black break-words xl:text-[22px]">
-                        {product.name}
-                      </h3>
-                      <span className="text-club-accent shrink-0 text-xl font-black whitespace-nowrap">
-                        {formatPrice(PRODUCTS[product.id].price)}
+                      <span className="text-xs font-semibold">
+                        {item.label}
                       </span>
-                    </div>
+                    </button>
+                  ))}
+                </div>
 
-                    <p className="mt-3 min-h-14 text-sm leading-6 text-white/50">
-                      {product.description}
-                    </p>
-
-                    <div className="mt-6 flex flex-wrap gap-2">
-                      {product.items.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/65"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-6">
-                      <span
-                        className={`text-sm font-bold ${
-                          active ? "text-club-accent" : "text-white/75"
-                        }`}
-                      >
-                        {active ? "Wybrano produkt" : "Wybierz produkt"}
-                      </span>
-
-                      <ArrowRight
-                        size={18}
-                        className={
-                          active ? "text-club-accent" : "text-white/50"
-                        }
-                      />
-                    </div>
-                  </div>
-                </button>
-
-                {/* OSOBNY PRZYCISK GALERII */}
-
-                <button
-                  type="button"
-                  onClick={() => setGalleryProduct(product.id)}
-                  className="border-club-accent/40 bg-club-bg/95 text-club-accent hover:bg-club-surface absolute top-52 right-5 z-20 rounded-full border px-4 py-2 text-xs font-bold shadow-lg transition"
-                >
-                  Zobacz {product.id === "jacket" ? 5 : 6} zdjęć
-                </button>
+                {/* Przycisk wyboru pakietu */}
+                <div className="px-5 pb-5 sm:px-7 sm:pb-7">
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setSelectedPackage(id)}
+                    className="text-club-accent mt-6 flex w-full items-center justify-between border-t border-white/10 pt-5 text-left text-sm font-bold"
+                  >
+                    {selected ? "Wybrano ten pakiet" : "Wybierz ten pakiet"}
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
-
-        {/* OKNO GALERII */}
-
+        <p className="mt-5 text-xs leading-6 text-white/45">
+          Numery katalogowe odzieży są uwzględniane w zestawieniu dla trenerów.
+          Spodnie i bluzę dobierzesz w niezależnych rozmiarach.
+        </p>
         {galleryProduct && (
           <ProductGallery
             product={galleryProduct}
@@ -266,11 +236,11 @@ export default function Home() {
         )}
       </section>
       <SizeAdvisor onRecommendationChange={setRecommendation} />
-
-      {/* ORDER FORM */}
-      <OrderForm selectedProducts={selected} recommendation={recommendation} />
-
-      {/* FOOTER */}
+      <OrderForm
+        selectedPackage={selectedPackage}
+        recommendation={recommendation}
+      />
+      <OrderGuide />
       <footer className="bg-club-bg border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 px-5 py-8 text-xs text-white/40 md:flex-row md:px-8">
           <span>© 2026 Górnik Radlin — zamówienia klubowe</span>

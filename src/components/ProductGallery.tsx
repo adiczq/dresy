@@ -1,22 +1,32 @@
 "use client";
-import type { ProductId } from "@/lib/products";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const galleries = {
-  tracksuit: {
-    code: "JOMA / 101966.703",
-    title: "Academy IV — komplet dresowy",
+  pants: {
+    code: "JOMA / SPODNIE",
+    title: "Spodnie treningowe",
     photos: [
-      "/images/joma-academy-iv_1.png",
-      "/images/joma-academy-iv_2.png",
-      "/images/joma-academy-iv_3.png",
-      "/images/joma-academy-iv_4.png",
-      "/images/joma-academy-iv_5.jpg",
-      "/images/joma-academy-iv_6.jpg",
+      "/images/100761.331_1.png",
+      "/images/100761.331_2.png",
+      "/images/100761.331_3.png",
+      "/images/100761.331_4.png",
+      "/images/100761.331_5.png",
+      "/images/100761.331_6.png",
+      "/images/100761.331_7.png",
     ],
   },
+  sweatshirt: {
+    code: "JOMA / BLUZA",
+    title: "Bluza treningowa",
+    photos: [
+      "/images/100947.703_1.png",
+      "/images/100947.703_2.png",
+      "/images/100947.703_3.png",
+    ],
+  },
+
   jacket: {
     code: "JOMA / 105301.700",
     title: "Kurtka treningowa",
@@ -43,7 +53,7 @@ const galleries = {
 };
 
 type Props = {
-  product: ProductId;
+  product: "pants" | "sweatshirt" | "jacket" | "jacket_basic";
   onClose: () => void;
 };
 
@@ -84,7 +94,7 @@ export default function ProductGallery({ product, onClose }: Props) {
         previouslyFocused.focus();
       }
     };
-  }, [onClose]);
+  }, [onClose, photos.length]);
 
   function previousPhoto() {
     setActiveIndex((index) => (index - 1 + photos.length) % photos.length);
@@ -170,7 +180,7 @@ export default function ProductGallery({ product, onClose }: Props) {
         </div>
 
         {/* Miniatury */}
-        <div className="grid grid-cols-6 gap-2 p-3 sm:gap-3 sm:p-5">
+        <div className="grid grid-cols-4 gap-2 p-3 sm:grid-cols-7 sm:gap-3 sm:p-5">
           {photos.map((photo, index) => (
             <button
               key={photo}

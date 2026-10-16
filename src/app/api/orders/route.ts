@@ -5,66 +5,41 @@ import { checkOrderRateLimit } from "@/lib/order-rate-limit";
 
 import { getDb } from "@/lib/mongodb";
 import { getPlayerInitials } from "@/lib/initials";
-import { PRODUCTS, PRODUCT_IDS } from "@/lib/products";
+import { PACKAGES, PACKAGE_IDS } from "@/lib/products";
 import { ORDER_SIZES } from "@/lib/sizes";
 
-const orderSchema = z.object({
+const playerSchema = z.object({
   playerName: z.string().trim().min(3).max(100),
-
   group: z.string().trim().min(2).max(80),
   noInitials: z.boolean().default(false),
-  parentName: z.string().trim().min(3).max(100),
+  packageId: z.enum(PACKAGE_IDS),
+  items: z.array(z.object({
+    productId: z.enum(["pants", "sweatshirt", "jacket", "jacket_basic"]),
+    size: z.enum(ORDER_SIZES),
+    quantity: z.literal(1),
+  })).length(3),
+}).strict().superRefine((player, context) => {
+  const requiredIds: readonly string[] = PACKAGES[player.packageId].items;
+  const foundIds = player.items.map((item) => item.productId);
 
-  phone: z
-    .string()
-    .trim()
-    .min(9)
-    .max(25)
-    .regex(/^[+\d\s()-]+$/)
-    .refine((value) => {
-      const digits = value.replace(/\D/g, "");
-      return digits.length >= 9 && digits.length <= 15;
-    }),
+const foundIdSet = new Set<string>(foundIds);
 
-  items: z
-    .array(
-      z.object({
-        productId: z.enum(PRODUCT_IDS),
-        size: z.enum(ORDER_SIZES),
-        quantity: z.number().int().min(1).max(5).default(1),
-      }),
-    )
-    .min(1)
-    .max(3)
-    .refine(
-      (items) =>
-        new Set(items.map((item) => item.productId)).size === items.length,
-      "Nie można zamówić tego samego produktu dwa razy.",
-    ),
-
-  // Pole zabezpieczające przed prostymi botami.
-  website: z.string().max(200).optional(),
+if (
+  foundIdSet.size !== 3 ||
+  requiredIds.some((id) => !foundIdSet.has(id))
+) {
+    context.addIssue({ code: "custom", message: "Pakiet musi zawierać dokładnie spodnie, bluzę i właściwą kurtkę.", path: ["items"] });
+  }
 });
 
-const multiPlayerSchema = orderSchema
-  .pick({
-    parentName: true,
-    phone: true,
-    website: true,
-  })
-  .extend({
-    players: z
-      .array(
-        orderSchema.pick({
-          playerName: true,
-          group: true,
-          noInitials: true,
-          items: true,
-        }),
-      )
-      .min(1)
-      .max(4),
-  });
+const orderSchema = z.object({
+  parentName: z.string().trim().min(3).max(100),
+  phone: z.string().trim().min(9).max(25).regex(/^[+\d\s()-]+$/).refine(
+    (value) => { const digits = value.replace(/\D/g, ""); return digits.length >= 9 && digits.length <= 15; },
+  ),
+  website: z.string().max(200).optional(),
+  players: z.array(playerSchema).min(1).max(4),
+}).strict();
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,9 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validation = z
-      .union([orderSchema, multiPlayerSchema])
-      .safeParse(body);
+    const validation = orderSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -166,49 +139,21 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
     const now = new Date();
 
-    // Nigdy nie ufamy cenom z przeglądarki. Zapisujemy cenę z serwera
-    // na pozycji zamówienia, aby przyszłe zmiany cennika nie zmieniały historii.
-    const priceItems = (items: z.infer<typeof orderSchema>["items"]) =>
-      items.map((item) => ({
-        ...item,
-        unitPrice: PRODUCTS[item.productId].price,
-      }));
-
-    const itemsTotal = (items: ReturnType<typeof priceItems>) =>
-      items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-
-    const document =
-      "players" in order
-        ? {
-            parentName: order.parentName,
-            phone: order.phone,
-            players: order.players.map((player) => {
-              const items = priceItems(player.items);
-              return {
-                ...player,
-                items,
-                totalPrice: itemsTotal(items),
-                initials: player.noInitials
-                  ? null
-                  : getPlayerInitials(player.playerName),
-              };
-            }),
-          }
-        : {
-            ...order,
-            items: priceItems(order.items),
-            initials: order.noInitials
-              ? null
-              : getPlayerInitials(order.playerName),
-          };
-
-    const totalPrice =
-      "players" in document
-        ? (document.players ?? []).reduce(
-            (sum, player) => sum + player.totalPrice,
-            0,
-          )
-        : itemsTotal(document.items);
+    // Cena pakietu pochodzi wyłącznie z serwera. Nie wyceniamy osobno
+    // poszczególnych elementów pakietu — w historii zachowujemy jego cenę.
+    const players = order.players.map((player) => {
+      const pack = PACKAGES[player.packageId];
+      return {
+        ...player,
+        items: player.items.map((item) => ({...item, unitPrice: 0})),
+        packagePrice: pack.price,
+        catalogPrice: pack.catalogPrice,
+        totalPrice: pack.price,
+        initials: player.noInitials ? null : getPlayerInitials(player.playerName),
+      };
+    });
+    const totalPrice = players.reduce((sum, player) => sum + player.packagePrice, 0);
+    const document = {parentName: order.parentName, phone: order.phone, players};
 
     const result = await db.collection("orders").insertOne({
       ...document,

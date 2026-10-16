@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ClipboardList, Download, Shirt, Search, Users } from "lucide-react";
 import PlayersTable from "@/components/admin/PlayersTable";
 import type { AdminOrderRow } from "@/lib/admin-orders";
-import { PRODUCT_IDS, PRODUCTS, formatPrice } from "@/lib/products";
+import { PRODUCT_IDS, PRODUCTS, PACKAGES, formatPrice } from "@/lib/products";
 import PlayerDeleteDialog from "@/components/admin/PlayerDeleteDialog";
 import PlayerEditDialog, {
   type PlayerEditUpdate,
@@ -82,23 +82,15 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
   const playerCount = new Set(filteredRows.map((row) => row.playerKey)).size;
 
-  const tracksuitCount = filteredRows
-    .filter((row) => row.productId === "tracksuit")
-    .reduce((sum, row) => sum + row.quantity, 0);
-
-  const jacketCount = filteredRows
-    .filter((row) => row.productId === "jacket")
-    .reduce((sum, row) => sum + row.quantity, 0);
-
-  const basicJacketCount = filteredRows
-    .filter((row) => row.productId === "jacket_basic")
-    .reduce((sum, row) => sum + row.quantity, 0);
-
+  const uniquePlayers = [...new Map(filteredRows.map((row) => [row.playerKey, row])).values()];
   const pricedTotal = filteredRows.reduce(
-    (sum, row) => sum + (row.unitPrice ?? 0) * row.quantity,
-    0,
+    (sum, row) => sum + (row.packageId ? 0 : (row.unitPrice ?? 0) * row.quantity), 0,
+  ) + uniquePlayers.reduce((sum, row) => sum + (row.packageId ? (row.packagePrice ?? 0) : 0), 0);
+  const missingPrices = filteredRows.some(
+    (row) => row.packageId ? row.packagePrice === null : row.unitPrice === null,
   );
-  const missingPrices = filteredRows.some((row) => row.unitPrice === null);
+  const packageOneCount = uniquePlayers.filter((row) => row.packageId === "package_1").length;
+  const packageTwoCount = uniquePlayers.filter((row) => row.packageId === "package_2").length;
 
   const sizeTotals = useMemo(() => {
     const totals = new Map<
@@ -152,11 +144,11 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         }
 
         const size =
-          row.productId === "tracksuit"
-            ? (update.tracksuitSize ?? row.size)
-            : row.productId === "jacket"
-              ? (update.jacketSize ?? row.size)
-              : (update.basicJacketSize ?? row.size);
+          row.productId === "tracksuit" ? (update.tracksuitSize ?? row.size)
+            : row.productId === "pants" ? (update.pantsSize ?? row.size)
+            : row.productId === "sweatshirt" ? (update.sweatshirtSize ?? row.size)
+            : row.productId === "jacket" ? (update.jacketSize ?? row.size)
+            : (update.basicJacketSize ?? row.size);
 
         return {
           ...row,
@@ -249,31 +241,11 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
-          {
-            label: "Zawodnicy",
-            value: playerCount,
-            icon: Users,
-          },
-          {
-            label: "Komplety dresowe",
-            value: tracksuitCount,
-            icon: Shirt,
-          },
-          {
-            label: "Kurtki Joma",
-            value: jacketCount,
-            icon: ClipboardList,
-          },
-          {
-            label: "Kurtki ekonomiczne",
-            value: basicJacketCount,
-            icon: ClipboardList,
-          },
-          {
-            label: "Wartość zamówień (zł)",
-            value: pricedTotal,
-            icon: ClipboardList,
-          },
+          {label: "Zawodnicy", value: playerCount, icon: Users},
+          {label: PACKAGES.package_1.label, value: packageOneCount, icon: Shirt},
+          {label: PACKAGES.package_2.label, value: packageTwoCount, icon: ClipboardList},
+          {label: "Zgłoszone elementy", value: filteredRows.reduce((n,row) => n + row.quantity, 0), icon: ClipboardList},
+          {label: "Wartość zamówień (zł)", value: pricedTotal, icon: ClipboardList},
         ].map(({ label, value, icon: Icon }) => (
           <div
             key={label}

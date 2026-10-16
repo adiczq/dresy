@@ -1,11 +1,10 @@
 import type { SizeRecommendation } from "@/components/SizeAdvisor";
+import type { ProductId, PackageId } from "@/lib/products";
 
-import type { ProductId } from "@/lib/products";
-
-export type { ProductId };
+export type { ProductId, PackageId };
 
 export type OrderFormProps = {
-  selectedProducts: ProductId[];
+  selectedPackage: PackageId;
   recommendation: SizeRecommendation;
 };
 
@@ -14,10 +13,10 @@ export type PlayerDraft = {
   playerName: string;
   group: string;
   noInitials: boolean;
-  products: ProductId[];
-  manualTracksuitSize: string;
+  packageId: PackageId;
+  manualPantsSize: string;
+  manualSweatshirtSize: string;
   manualJacketSize: string;
-  manualBasicJacketSize: string;
 };
 
 export type OrderItem = {
@@ -30,5 +29,6 @@ export type OrderPlayer = {
   playerName: string;
   group: string;
   noInitials: boolean;
+  packageId: PackageId;
   items: OrderItem[];
 };

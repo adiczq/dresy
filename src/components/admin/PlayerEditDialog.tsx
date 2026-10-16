@@ -13,6 +13,8 @@ export type PlayerEditUpdate = {
   group: string;
   initials: string | null;
   tracksuitSize?: string;
+  pantsSize?: string;
+  sweatshirtSize?: string;
   jacketSize?: string;
   basicJacketSize?: string;
 };
@@ -28,6 +30,8 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
 
   const tracksuit = rows.find((row) => row.productId === "tracksuit");
 
+  const pants = rows.find((row) => row.productId === "pants");
+  const sweatshirt = rows.find((row) => row.productId === "sweatshirt");
   const jacket = rows.find((row) => row.productId === "jacket");
   const basicJacket = rows.find((row) => row.productId === "jacket_basic");
 
@@ -36,6 +40,8 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const [noInitials, setNoInitials] = useState(player.initials === null);
   const [initials, setInitials] = useState(player.initials ?? "");
   const [tracksuitSize, setTracksuitSize] = useState(tracksuit?.size ?? "");
+  const [pantsSize, setPantsSize] = useState(pants?.size ?? "");
+  const [sweatshirtSize, setSweatshirtSize] = useState(sweatshirt?.size ?? "");
   const [jacketSize, setJacketSize] = useState(jacket?.size ?? "");
   const [basicJacketSize, setBasicJacketSize] = useState(
     basicJacket?.size ?? "",
@@ -47,7 +53,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const groups = [
     ...new Set([
       player.group,
-      "Skrzat 2020",
+      "Skrzat G1 2020",
       "Żaki 2019",
       "Żaki 2018",
       "Orlik 2017",
@@ -84,6 +90,8 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
           noInitials,
           initials: cleanedInitials,
           ...(tracksuit ? { tracksuitSize } : {}),
+          ...(pants ? { pantsSize } : {}),
+          ...(sweatshirt ? { sweatshirtSize } : {}),
           ...(jacket ? { jacketSize } : {}),
           ...(basicJacket ? { basicJacketSize } : {}),
         }),
@@ -104,6 +112,8 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
         group: group.trim(),
         initials: noInitials ? null : cleanedInitials,
         ...(tracksuit ? { tracksuitSize } : {}),
+        ...(pants ? { pantsSize } : {}),
+        ...(sweatshirt ? { sweatshirtSize } : {}),
         ...(jacket ? { jacketSize } : {}),
         ...(basicJacket ? { basicJacketSize } : {}),
       });
@@ -247,6 +257,19 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
               </div>
             )}
 
+            {[
+              { item: pants, id: "pants", label: "Rozmiar spodni", value: pantsSize, onChange: setPantsSize },
+              { item: sweatshirt, id: "sweatshirt", label: "Rozmiar bluzy", value: sweatshirtSize, onChange: setSweatshirtSize },
+            ].map((entry) => entry.item && (
+              <div key={entry.id}>
+                <label htmlFor={`edit-${entry.id}`} className="mb-2 block text-sm font-semibold">{entry.label}</label>
+                <select id={`edit-${entry.id}`} value={entry.value} onChange={(event) => entry.onChange(event.target.value)}
+                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
+                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </div>
+            ))}
+
             {jacket && (
               <div>
                 <label
@@ -275,7 +298,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
                   htmlFor="edit-basic-jacket"
                   className="mb-2 block text-sm font-semibold"
                 >
-                  Rozmiar kurtki ekonomicznej
+                  Rozmiar kurtki przeciwdeszczowej
                 </label>
                 <select
                   id="edit-basic-jacket"
