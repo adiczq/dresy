@@ -22,3 +22,7 @@ export async function getDb(): Promise<Db> {
   const client = await clientPromise;
   return client.db(databaseName);
 }
+
+export async function getMongoClient(): Promise<MongoClient> {
+  return clientPromise;
+}

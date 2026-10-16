@@ -3,7 +3,6 @@ import "server-only";
 import type { Document } from "mongodb";
 
 import { getDb } from "@/lib/mongodb";
-import { getPlayerInitials } from "@/lib/initials";
 
 import { PRODUCT_IDS, type ProductId, type PackageId } from "@/lib/products";
 
@@ -20,10 +19,11 @@ type StoredPlayer = {
   packagePrice?: number;
   catalogPrice?: number;
   paymentStatus?: "paid" | "unpaid";
+  number?: number;
+  batchNumber?: number;
+  approvedAt?: Date;
   playerName: string;
   group: string;
-  noInitials?: boolean;
-  initials?: string | null;
   items?: StoredItem[];
 };
 
@@ -31,8 +31,9 @@ interface StoredOrder extends Document {
   paymentStatus?: "paid" | "unpaid";
   playerName?: string;
   group?: string;
-  noInitials?: boolean;
-  initials?: string | null;
+  number?: number;
+  batchNumber?: number;
+  approvedAt?: Date;
   items?: StoredItem[];
   players?: StoredPlayer[];
   parentName?: string;
@@ -52,7 +53,9 @@ export type AdminOrderRow = {
   reference: string;
   playerName: string;
   group: string;
-  initials: string | null;
+  number: number | null;
+  batchNumber: number | null;
+  approved: boolean;
   productId: ProductId;
   size: string;
   quantity: number;
@@ -69,7 +72,7 @@ export async function getAdminOrders() {
     .collection<StoredOrder>("orders")
     .find({ deletedAt: { $exists: false } })
     .sort({ createdAt: -1 })
-    .limit(500)
+    .limit(1000)
     .toArray();
 
   const rows: AdminOrderRow[] = orders.flatMap((order) => {
@@ -92,8 +95,9 @@ export async function getAdminOrders() {
                 paymentStatus: order.paymentStatus,
                 playerName: order.playerName,
                 group: order.group ?? "",
-                noInitials: order.noInitials,
-                initials: order.initials,
+                number: order.number,
+                batchNumber: order.batchNumber,
+                approvedAt: order.approvedAt,
                 items: order.items ?? [],
               },
             ]
@@ -103,10 +107,6 @@ export async function getAdminOrders() {
       if (player.deletedAt) {
         return [];
       }
-
-      const initials = player.noInitials
-        ? null
-        : (player.initials ?? getPlayerInitials(player.playerName));
 
       const playerKey = `${orderId}:${playerIndex}`;
 
@@ -128,7 +128,9 @@ export async function getAdminOrders() {
             reference,
             playerName: player.playerName,
             group: player.group,
-            initials,
+            number: typeof player.number === "number" ? player.number : null,
+            batchNumber: typeof player.batchNumber === "number" ? player.batchNumber : null,
+            approved: player.approvedAt instanceof Date,
             productId: item.productId,
             size: item.size,
             quantity:

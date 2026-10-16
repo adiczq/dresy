@@ -6,7 +6,6 @@ import {
   ShoppingBag,
 } from "lucide-react";
 
-import { getPlayerInitials } from "@/lib/initials";
 import { PRODUCTS, PACKAGES, formatPrice, getOrderPrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
@@ -58,12 +57,6 @@ export default function OrderSummary({
 
                 <p className="text-white/65">Grupa: {player.group}</p>
 
-                <p className="text-white/65">
-                  Inicjały:{" "}
-                  {player.noInitials
-                    ? "Bez inicjałów"
-                    : getPlayerInitials(player.playerName)}
-                </p>
 
                 <p className="text-club-accent font-bold">
                   {PACKAGES[player.packageId].label}

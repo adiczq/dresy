@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Pencil, X } from "lucide-react";
 import type { AdminOrderRow } from "@/lib/admin-orders";
 import { ORDER_SIZES } from "@/lib/sizes";
+import { trainingGroups } from "@/lib/training-groups";
 
 const SIZES = ORDER_SIZES;
 
@@ -11,7 +12,7 @@ export type PlayerEditUpdate = {
   playerKey: string;
   playerName: string;
   group: string;
-  initials: string | null;
+  number: number | null;
   tracksuitSize?: string;
   pantsSize?: string;
   sweatshirtSize?: string;
@@ -37,8 +38,6 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
 
   const [playerName, setPlayerName] = useState(player.playerName);
   const [group, setGroup] = useState(player.group);
-  const [noInitials, setNoInitials] = useState(player.initials === null);
-  const [initials, setInitials] = useState(player.initials ?? "");
   const [tracksuitSize, setTracksuitSize] = useState(tracksuit?.size ?? "");
   const [pantsSize, setPantsSize] = useState(pants?.size ?? "");
   const [sweatshirtSize, setSweatshirtSize] = useState(sweatshirt?.size ?? "");
@@ -51,17 +50,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
   const [error, setError] = useState("");
 
   const groups = [
-    ...new Set([
-      player.group,
-      "Skrzat G1 2020",
-      "Żaki 2019",
-      "Żaki 2018",
-      "Orlik 2017",
-      "Orlik 2017 II",
-      "Orlik 2016",
-      "Trampkarze 2013",
-      "Junior Młodszy 2010",
-    ]),
+    ...new Set([player.group, ...trainingGroups.map((group) => group.value)]),
   ].filter(Boolean);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -71,10 +60,6 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
 
     setSaving(true);
     setError("");
-
-    const cleanedInitials = noInitials
-      ? ""
-      : initials.trim().toLocaleUpperCase("pl-PL");
 
     try {
       const response = await fetch("/api/admin/players", {
@@ -87,8 +72,6 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
           playerIndex: player.playerIndex,
           playerName: playerName.trim(),
           group: group.trim(),
-          noInitials,
-          initials: cleanedInitials,
           ...(tracksuit ? { tracksuitSize } : {}),
           ...(pants ? { pantsSize } : {}),
           ...(sweatshirt ? { sweatshirtSize } : {}),
@@ -100,6 +83,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
       const data = (await response.json()) as {
         success?: boolean;
         error?: string;
+        number?: number | null;
       };
 
       if (!response.ok || !data.success) {
@@ -110,7 +94,7 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
         playerKey: player.playerKey,
         playerName: playerName.trim(),
         group: group.trim(),
-        initials: noInitials ? null : cleanedInitials,
+        number: data.number ?? null,
         ...(tracksuit ? { tracksuitSize } : {}),
         ...(pants ? { pantsSize } : {}),
         ...(sweatshirt ? { sweatshirtSize } : {}),
@@ -203,35 +187,6 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
             </select>
           </div>
 
-          <div>
-            <label
-              htmlFor="edit-initials"
-              className="mb-2 block text-sm font-semibold"
-            >
-              Inicjały do nadruku
-            </label>
-
-            <input
-              id="edit-initials"
-              maxLength={6}
-              required={!noInitials}
-              disabled={noInitials}
-              value={initials}
-              onChange={(event) => setInitials(event.target.value)}
-              className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-4 py-3 text-sm uppercase outline-none disabled:opacity-40"
-            />
-
-            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs text-white/60">
-              <input
-                type="checkbox"
-                checked={noInitials}
-                onChange={(event) => setNoInitials(event.target.checked)}
-                className="accent-club-accent h-4 w-4"
-              />
-              Bez inicjałów
-            </label>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             {tracksuit && (
               <div>
@@ -258,17 +213,45 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
             )}
 
             {[
-              { item: pants, id: "pants", label: "Rozmiar spodni", value: pantsSize, onChange: setPantsSize },
-              { item: sweatshirt, id: "sweatshirt", label: "Rozmiar bluzy", value: sweatshirtSize, onChange: setSweatshirtSize },
-            ].map((entry) => entry.item && (
-              <div key={entry.id}>
-                <label htmlFor={`edit-${entry.id}`} className="mb-2 block text-sm font-semibold">{entry.label}</label>
-                <select id={`edit-${entry.id}`} value={entry.value} onChange={(event) => entry.onChange(event.target.value)}
-                  className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none">
-                  {SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
-                </select>
-              </div>
-            ))}
+              {
+                item: pants,
+                id: "pants",
+                label: "Rozmiar spodni",
+                value: pantsSize,
+                onChange: setPantsSize,
+              },
+              {
+                item: sweatshirt,
+                id: "sweatshirt",
+                label: "Rozmiar bluzy",
+                value: sweatshirtSize,
+                onChange: setSweatshirtSize,
+              },
+            ].map(
+              (entry) =>
+                entry.item && (
+                  <div key={entry.id}>
+                    <label
+                      htmlFor={`edit-${entry.id}`}
+                      className="mb-2 block text-sm font-semibold"
+                    >
+                      {entry.label}
+                    </label>
+                    <select
+                      id={`edit-${entry.id}`}
+                      value={entry.value}
+                      onChange={(event) => entry.onChange(event.target.value)}
+                      className="bg-club-bg focus:border-club-accent w-full rounded-xl border border-white/15 px-3 py-3 text-sm outline-none"
+                    >
+                      {SIZES.map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ),
+            )}
 
             {jacket && (
               <div>
@@ -317,8 +300,8 @@ export default function PlayerEditDialog({ rows, onClose, onSaved }: Props) {
           </div>
 
           <p className="text-xs leading-6 text-white/40">
-            Zmiany rozmiarów, grupy i inicjałów zapiszą się w bazie klubu.
-            Status płatności pozostanie bez zmian.
+            Zmiany danych i rozmiarów zapiszą się w bazie klubu. Status
+            płatności pozostanie bez zmian.
           </p>
 
           {error && (

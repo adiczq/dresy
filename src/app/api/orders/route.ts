@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { checkOrderRateLimit } from "@/lib/order-rate-limit";
 import { getDb } from "@/lib/mongodb";
-import { getPlayerInitials } from "@/lib/initials";
+import { allocateNumber, NumberingError, withNumberTransaction } from "@/lib/numbering";
 import { PACKAGES, PACKAGE_IDS } from "@/lib/products";
 import { ORDER_SIZES } from "@/lib/sizes";
 
@@ -13,7 +13,6 @@ const playerSchema = z
   .object({
     playerName: z.string().trim().min(3).max(100),
     group: z.string().trim().min(2).max(80),
-    noInitials: z.boolean().default(false),
     packageId: z.enum(PACKAGE_IDS),
     items: z
       .array(
@@ -92,6 +91,7 @@ type ExistingOrder = {
   createdAt: Date;
   totalPrice: number;
   requestHash: string;
+  players?: { number?: number }[];
 };
 
 function respondToExistingOrder(existing: ExistingOrder, requestHash: string) {
@@ -118,6 +118,7 @@ function respondToExistingOrder(existing: ExistingOrder, requestHash: string) {
       reference,
       totalPrice: existing.totalPrice,
       reused: true,
+      numbers: existing.players?.map((player) => player.number ?? null) ?? [],
     },
     {
       status: 200,
@@ -256,48 +257,49 @@ export async function POST(request: NextRequest) {
 
     const players = order.players.map((player) => {
       const pack = PACKAGES[player.packageId];
-
       return {
         ...player,
-        items: player.items.map((item) => ({
-          ...item,
-          unitPrice: 0,
-        })),
+        items: player.items.map((item) => ({ ...item, unitPrice: 0 })),
         packagePrice: pack.price,
         catalogPrice: pack.catalogPrice,
         totalPrice: pack.price,
-        initials: player.noInitials
-          ? null
-          : getPlayerInitials(player.playerName),
       };
     });
-
-    const totalPrice = players.reduce(
-      (sum, player) => sum + player.packagePrice,
-      0,
-    );
+    const totalPrice = players.reduce((sum, player) => sum + player.packagePrice, 0);
 
     try {
-      const result = await collection.insertOne({
-        parentName: order.parentName,
-        phone: order.phone,
-        players,
-        totalPrice,
-        currency: "PLN",
-        status: "new",
-        editTokenHash,
-        idempotencyKey,
-        requestHash,
-        createdAt: now,
-        updatedAt: now,
+      // Identyfikator zamówienia tworzymy przed transakcją, aby rezerwacje
+      // numerów jednoznacznie wskazywały właściciela.
+      const newId = new ObjectId();
+      const numbers = await withNumberTransaction(async (transactionDb, session) => {
+        const assigned: number[] = [];
+        for (const [index, player] of players.entries()) {
+          assigned.push(await allocateNumber(
+            transactionDb, session, player.group, newId.toHexString(), index,
+          ));
+        }
+        await transactionDb.collection("orders").insertOne({
+          _id: newId,
+          parentName: order.parentName,
+          phone: order.phone,
+          players: players.map((player, index) => ({
+            ...player,
+            number: assigned[index],
+          })),
+          totalPrice,
+          currency: "PLN",
+          status: "new",
+          editTokenHash,
+          idempotencyKey,
+          requestHash,
+          createdAt: now,
+          updatedAt: now,
+        }, { session });
+        return assigned;
       });
 
-      const orderId = result.insertedId.toHexString();
-
-      const reference = `GR-${now.getUTCFullYear()}-${orderId
-        .slice(-10)
-        .toUpperCase()}`;
-
+      const orderId = newId.toHexString();
+      const reference = `GR-${now.getUTCFullYear()}-${orderId.slice(-10).toUpperCase()}`;
       return NextResponse.json(
         {
           success: true,
@@ -306,12 +308,10 @@ export async function POST(request: NextRequest) {
           reference,
           totalPrice,
           editToken,
+          numbers,
           reused: false,
         },
-        {
-          status: 201,
-          headers: { "Cache-Control": "no-store" },
-        },
+        { status: 201, headers: { "Cache-Control": "no-store" } },
       );
     } catch (error) {
       // Dwa równoczesne żądania mogły przejść przez
@@ -329,6 +329,9 @@ export async function POST(request: NextRequest) {
       throw error;
     }
   } catch (error) {
+    if (error instanceof NumberingError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("Błąd zapisywania zamówienia:", error);
 
     return NextResponse.json(

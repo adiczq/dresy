@@ -33,7 +33,6 @@ export default function PlayerCard({player, index, recommendation, showPackageSe
         idPrefix={player.id} playerName={player.playerName}
         setPlayerName={(playerName) => onChange({playerName})}
         group={player.group} setGroup={(group) => onChange({group})}
-        noInitials={player.noInitials} setNoInitials={(noInitials) => onChange({noInitials})}
       />
       {showPackageSelector ? (
         <div className="space-y-3 border-t border-white/10 pt-6">

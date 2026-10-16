@@ -1,11 +1,11 @@
 import { CheckCircle2, Copy } from "lucide-react";
 
-import { getPlayerInitials } from "@/lib/initials";
 import { PRODUCTS, PACKAGES, formatPrice } from "@/lib/products";
 import type { OrderPlayer } from "./types";
 
 type Props = {
   reference: string;
+  numbers: (number | null)[];
   totalPrice: number;
   players: OrderPlayer[];
   parentName: string;
@@ -15,6 +15,7 @@ type Props = {
 
 export default function OrderConfirmation({
   reference,
+  numbers,
   totalPrice,
   players,
   parentName,
@@ -30,11 +31,7 @@ export default function OrderConfirmation({
       "",
       `Zawodnik ${index + 1}: ${player.playerName}`,
       `Grupa: ${player.group}`,
-      `Inicjały: ${
-        player.noInitials
-          ? "Bez inicjałów"
-          : getPlayerInitials(player.playerName)
-      }`,
+      `Numer zawodnika: ${numbers[index] ?? "Nienadany"}`,
 
       `Pakiet: ${PACKAGES[player.packageId].label} — ${formatPrice(PACKAGES[player.packageId].price)}`,
       ...player.items.map((item) =>
@@ -83,12 +80,12 @@ export default function OrderConfirmation({
             >
               <p className="font-bold">{player.playerName}</p>
 
-              <p className="text-white/55">
-                {player.group} ·{" "}
-                {player.noInitials
-                  ? "Bez inicjałów"
-                  : getPlayerInitials(player.playerName)}
-              </p>
+              <p className="text-white/55">{player.group}</p>
+              {numbers[index] != null && (
+                <p className="text-sm font-bold text-club-accent">
+                  Numer odzieży: {numbers[index]}
+                </p>
+              )}
 
               <p className="font-semibold text-club-accent">{PACKAGES[player.packageId].label}</p>
               {player.items.map((item) => (

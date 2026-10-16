@@ -15,7 +15,6 @@ import type {
   PlayerDraft,
 } from "@/components/order/types";
 
-import { getPlayerInitials } from "@/lib/initials";
 import { PACKAGES, PRODUCTS, formatPrice, getOrderPrice } from "@/lib/products";
 
 export default function OrderForm({
@@ -27,7 +26,6 @@ export default function OrderForm({
       id: "player-1",
       playerName: "",
       group: "",
-      noInitials: false,
       packageId: selectedPackage,
       manualPantsSize: "",
       manualSweatshirtSize: "",
@@ -67,6 +65,7 @@ export default function OrderForm({
   const [savedOrder, setSavedOrder] = useState<{
     reference: string;
     totalPrice: number;
+    numbers: (number | null)[];
   } | null>(null);
 
   // Pierwszy zawodnik korzysta z pakietu wybranego na górze strony.
@@ -99,7 +98,6 @@ export default function OrderForm({
     return {
       playerName: player.playerName.trim(),
       group: player.group.trim(),
-      noInitials: player.noInitials,
       packageId: player.packageId,
       items,
     };
@@ -126,8 +124,7 @@ export default function OrderForm({
         id: crypto.randomUUID(),
         playerName: "",
         group: "",
-        noInitials: false,
-        packageId: selectedPackage,
+          packageId: selectedPackage,
         manualPantsSize: "",
         manualSweatshirtSize: "",
         manualJacketSize: "",
@@ -198,11 +195,6 @@ export default function OrderForm({
       "",
       `Zawodnik ${index + 1}: ${player.playerName}`,
       `Grupa: ${player.group}`,
-      `Inicjały: ${
-        player.noInitials
-          ? "Bez inicjałów"
-          : getPlayerInitials(player.playerName)
-      }`,
 
       `Pakiet: ${PACKAGES[player.packageId].label}`,
       ...player.items.map(
@@ -307,6 +299,7 @@ export default function OrderForm({
         success?: boolean;
         reference?: string;
         totalPrice?: number;
+        numbers?: (number | null)[];
         error?: string;
       };
 
@@ -318,6 +311,7 @@ export default function OrderForm({
       setSavedOrder({
         reference: data.reference,
         totalPrice: data.totalPrice ?? orderTotal,
+        numbers: data.numbers ?? [],
       });
       sessionStorage.removeItem("dresy-pending-order-v1");
     } catch (error) {
@@ -335,6 +329,7 @@ export default function OrderForm({
     return (
       <OrderConfirmation
         reference={savedOrder.reference}
+        numbers={savedOrder.numbers}
         totalPrice={savedOrder.totalPrice}
         players={orderPlayers}
         parentName={parentName}

@@ -12,7 +12,6 @@ export type PlayerDraft = {
   id: string;
   playerName: string;
   group: string;
-  noInitials: boolean;
   packageId: PackageId;
   manualPantsSize: string;
   manualSweatshirtSize: string;
@@ -28,7 +27,6 @@ export type OrderItem = {
 export type OrderPlayer = {
   playerName: string;
   group: string;
-  noInitials: boolean;
   packageId: PackageId;
   items: OrderItem[];
 };

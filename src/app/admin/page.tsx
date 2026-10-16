@@ -53,7 +53,7 @@ async function AdminContent() {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-white/50">
-            Lista zawodników, rozmiary odzieży i inicjały do nadruku.
+            Lista zawodników, numery odzieży, rozmiary i partie dla dostawcy.
           </p>
         </div>
 

@@ -9,6 +9,8 @@ import {
   Layers3,
   Wallet,
   HandCoins,
+  LockKeyhole,
+  Hash,
 } from "lucide-react";
 import PlayersTable from "@/components/admin/PlayersTable";
 import type { AdminOrderRow } from "@/lib/admin-orders";
@@ -17,6 +19,7 @@ import PlayerDeleteDialog from "@/components/admin/PlayerDeleteDialog";
 import PlayerEditDialog, {
   type PlayerEditUpdate,
 } from "@/components/admin/PlayerEditDialog";
+import { trainingGroups } from "@/lib/training-groups";
 
 type Props = {
   ordersCount: number;
@@ -39,6 +42,9 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
   const [paymentError, setPaymentError] = useState("");
+  const [numberingError, setNumberingError] = useState("");
+  const [numberingBusy, setNumberingBusy] = useState(false);
+  const [batchFilter, setBatchFilter] = useState("all");
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
@@ -53,19 +59,59 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
     () =>
       [
         ...new Set([
-          "Skrzat G1 2020",
-          "Żaki 2019",
-          "Żaki 2018",
-          "Orlik 2017",
-          "Orlik 2017 II",
-          "Orlik 2016",
-          "Trampkarze 2013",
-          "Junior Młodszy 2010",
+          ...trainingGroups.map((group) => group.value),
           ...displayRows.map((row) => row.group),
         ]),
       ].filter(Boolean),
     [displayRows],
   );
+
+  const batchNumbers = [
+    ...new Set(
+      displayRows
+        .map((row) => row.batchNumber)
+        .filter((number): number is number => number !== null),
+    ),
+  ].sort((a, b) => a - b);
+
+  const draftPlayers = new Set(
+    displayRows.filter((row) => !row.approved).map((row) => row.playerKey),
+  ).size;
+  const unnumberedPlayers = new Set(
+    displayRows
+      .filter((row) => row.number === null)
+      .map((row) => row.playerKey),
+  ).size;
+
+  async function handleNumberAction(action: "assign" | "approve") {
+    if (numberingBusy) return;
+    const prompt =
+      action === "assign"
+        ? `Nadać numery ${unnumberedPlayers} starszym zawodnikom? Istniejące zatwierdzone numery nie zostaną zmienione.`
+        : `Zatwierdzić WSZYSTKIE ${draftPlayers} robocze zamówienia (niezależnie od filtrów)? Nie będzie można ich edytować ani usuwać. Płatności pozostaną dostępne.`;
+    if (!window.confirm(prompt)) return;
+    setNumberingBusy(true);
+    setNumberingError("");
+    try {
+      const response = await fetch(`/api/admin/numbering/${action}`, {
+        method: "POST",
+      });
+      const data = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        count?: number;
+        assigned?: number;
+      };
+      if (!response.ok || !data.success)
+        throw new Error(data.error ?? "Nie udało się wykonać operacji.");
+      window.location.reload();
+    } catch (error) {
+      setNumberingError(
+        error instanceof Error ? error.message : "Błąd numeracji.",
+      );
+      setNumberingBusy(false);
+    }
+  }
 
   const filteredRows = useMemo(() => {
     const phrase = search.trim().toLocaleLowerCase("pl-PL");
@@ -84,9 +130,14 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
           .toLocaleLowerCase("pl-PL")
           .includes(phrase);
 
-      return matchesGroup && matchesPayment && matchesSearch;
+      const matchesBatch =
+        batchFilter === "all" ||
+        (batchFilter === "draft"
+          ? !row.approved
+          : row.batchNumber === Number(batchFilter));
+      return matchesGroup && matchesPayment && matchesSearch && matchesBatch;
     });
-  }, [displayRows, selectedGroup, paymentFilter, search]);
+  }, [displayRows, selectedGroup, paymentFilter, search, batchFilter]);
 
   const playerCount = new Set(filteredRows.map((row) => row.playerKey)).size;
 
@@ -195,7 +246,7 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
           ...row,
           playerName: update.playerName,
           group: update.group,
-          initials: update.initials,
+          number: update.number,
           size,
         };
       }),
@@ -336,13 +387,56 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         </p>
       )}
 
+      <div className="bg-club-surface rounded-2xl border border-white/10 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-black">
+              <Hash size={20} className="text-club-accent" /> Numeracja i partie
+            </h2>
+            <p className="mt-2 text-xs leading-6 text-white/50">
+              Robocze: {draftPlayers} · Bez numeru: {unnumberedPlayers}.
+              Zatwierdzenie blokuje edycję i usuwanie, ale pozwala nadal
+              oznaczać wpłaty i przyjmować nowe zamówienia.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {unnumberedPlayers > 0 && (
+              <button
+                type="button"
+                disabled={numberingBusy}
+                onClick={() => void handleNumberAction("assign")}
+                className="border-club-accent/40 text-club-accent hover:bg-club-accent/10 rounded-xl border px-4 py-3 text-xs font-bold disabled:opacity-40"
+              >
+                Nadaj brakujące numery
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={
+                numberingBusy || draftPlayers === 0 || unnumberedPlayers > 0
+              }
+              onClick={() => void handleNumberAction("approve")}
+              className="bg-club-primary text-club-on-primary flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-bold disabled:opacity-40"
+            >
+              <LockKeyhole size={16} /> Zatwierdź partię
+            </button>
+          </div>
+        </div>
+        {numberingError && (
+          <p role="alert" className="mt-4 text-sm text-red-300">
+            {numberingError}
+          </p>
+        )}
+      </div>
+
       <div className="bg-club-surface overflow-hidden rounded-2xl border border-white/10">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 p-6 lg:flex-row lg:items-center">
           <div>
             <h2 className="text-xl font-black">Lista dla trenerów</h2>
             <p className="mt-2 text-xs text-white/50">
               Aktywne zgłoszenia: {activeOrderCount}. Pobrano {ordersCount}{" "}
-              zgłoszeń do analizy (maksymalnie 500 najnowszych).
+              zgłoszeń do analizy (maksymalnie 1000 najnowszych). Do dostawcy
+              wybierz jedną zatwierdzoną partię w filtrze.
             </p>
           </div>
 
@@ -373,6 +467,21 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
               {groups.map((group) => (
                 <option key={group} value={group}>
                   {group}
+                </option>
+              ))}
+            </select>
+
+            <select
+              aria-label="Filtruj według partii"
+              value={batchFilter}
+              onChange={(event) => setBatchFilter(event.target.value)}
+              className="bg-club-bg focus:border-club-accent rounded-xl border border-white/15 px-4 py-3 text-sm text-white outline-none"
+            >
+              <option value="all">Wszystkie partie</option>
+              <option value="draft">Robocze</option>
+              {batchNumbers.map((number) => (
+                <option key={number} value={String(number)}>
+                  Partia {number}
                 </option>
               ))}
             </select>

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ObjectId, type Document } from "mongodb";
+import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { ORDER_SIZES } from "@/lib/sizes";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getDb } from "@/lib/mongodb";
+import {
+  getCategory,
+  NumberingError,
+  allocateNumber,
+  releaseNumber,
+  withNumberTransaction,
+} from "@/lib/numbering";
 import type { ProductId } from "@/lib/products";
-
-const sizes = ORDER_SIZES;
 
 const editSchema = z
   .object({
@@ -14,83 +18,55 @@ const editSchema = z
     playerIndex: z.number().int().min(0).max(3),
     playerName: z.string().trim().min(3).max(100),
     group: z.string().trim().min(2).max(80),
-    noInitials: z.boolean(),
-    initials: z
-      .string()
-      .trim()
-      .max(6)
-      .regex(/^[\p{L}0-9]*$/u),
-    tracksuitSize: z.enum(sizes).optional(),
-    pantsSize: z.enum(sizes).optional(),
-    sweatshirtSize: z.enum(sizes).optional(),
-    jacketSize: z.enum(sizes).optional(),
-    basicJacketSize: z.enum(sizes).optional(),
+    tracksuitSize: z.enum(ORDER_SIZES).optional(),
+    pantsSize: z.enum(ORDER_SIZES).optional(),
+    sweatshirtSize: z.enum(ORDER_SIZES).optional(),
+    jacketSize: z.enum(ORDER_SIZES).optional(),
+    basicJacketSize: z.enum(ORDER_SIZES).optional(),
   })
-  .strict()
-  .refine((data) => data.noInitials || data.initials.length > 0, {
-    message: "Podaj inicjały albo zaznacz Bez inicjałów.",
-    path: ["initials"],
-  });
+  .strict();
 
-type StoredItem = {
-  productId: ProductId;
-  size: string;
-  quantity?: number;
-};
-
+type Item = { productId: ProductId; size: string };
 type StoredPlayer = {
-  playerName: string;
-  items?: StoredItem[];
+  group: string;
+  approvedAt?: Date;
+  deletedAt?: Date;
+  number?: number;
+  items?: Item[];
 };
-
-interface StoredOrder extends Document {
-  players?: StoredPlayer[];
-  playerName?: string;
-  items?: StoredItem[];
-}
 
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getAdminSession();
-
     if (session.isAdmin !== true) {
       return NextResponse.json({ error: "Brak uprawnień." }, { status: 401 });
     }
-
     const origin = request.headers.get("origin");
-
-    const allowedOrigins = [
+    const allowed = [
       process.env.APP_ORIGIN?.trim().replace(/\/$/, ""),
-      ...(process.env.NODE_ENV !== "production"
-        ? ["http://localhost:3000"]
-        : []),
+      ...(process.env.NODE_ENV === "production"
+        ? []
+        : ["http://localhost:3000"]),
     ];
-
-    if (!origin || !allowedOrigins.includes(origin)) {
+    if (!origin || !allowed.includes(origin)) {
       return NextResponse.json(
         { error: "Niedozwolone żądanie." },
         { status: 403 },
       );
     }
-
     if (!request.headers.get("content-type")?.includes("application/json")) {
       return NextResponse.json(
         { error: "Wymagany format JSON." },
         { status: 415 },
       );
     }
-
     const raw = await request.text();
-
-    if (raw.length > 3000) {
+    if (raw.length > 3000)
       return NextResponse.json(
         { error: "Zbyt duże żądanie." },
         { status: 413 },
       );
-    }
-
     let body: unknown;
-
     try {
       body = JSON.parse(raw);
     } catch {
@@ -99,119 +75,124 @@ export async function PATCH(request: NextRequest) {
         { status: 400 },
       );
     }
-
     const parsed = editSchema.safeParse(body);
-
-    if (!parsed.success) {
+    if (!parsed.success)
       return NextResponse.json(
         { error: "Nieprawidłowe dane zawodnika." },
         { status: 400 },
       );
-    }
-
     const data = parsed.data;
-    const _id = new ObjectId(data.orderId);
 
-    const db = await getDb();
-    const collection = db.collection<StoredOrder>("orders");
-
-    const order = await collection.findOne({ _id });
-
-    if (!order) {
-      return NextResponse.json(
-        { error: "Nie znaleziono zgłoszenia." },
-        { status: 404 },
+    const nextNumber = await withNumberTransaction(async (db, mongoSession) => {
+      const collection = db.collection("orders");
+      const _id = new ObjectId(data.orderId);
+      const order = await collection.findOne(
+        { _id },
+        { session: mongoSession },
       );
-    }
+      if (!order || order.deletedAt)
+        throw new NumberingError("Nie znaleziono zgłoszenia.", 404);
+      const family = Array.isArray(order.players);
 
-    const isFamilyOrder = Array.isArray(order.players);
+      const player: StoredPlayer | null = family
+        ? (order.players?.[data.playerIndex] ?? null)
+        : data.playerIndex === 0 &&
+            typeof order.playerName === "string" &&
+            typeof order.group === "string"
+          ? (order as unknown as StoredPlayer)
+          : null;
 
-    const player = isFamilyOrder
-      ? order.players?.[data.playerIndex]
-      : data.playerIndex === 0 && order.playerName
-        ? order
-        : undefined;
-
-    if (!player) {
-      return NextResponse.json(
-        { error: "Nie znaleziono zawodnika." },
-        { status: 404 },
-      );
-    }
-
-    const items = player.items ?? [];
-
-    if (!items.length) {
-      return NextResponse.json(
-        { error: "Zawodnik nie ma produktów do edycji." },
-        { status: 409 },
-      );
-    }
-
-    const prefix = isFamilyOrder ? `players.${data.playerIndex}.` : "";
-
-    const fields: Record<string, string | boolean | null | Date> = {
-      [`${prefix}playerName`]: data.playerName,
-      [`${prefix}group`]: data.group,
-      [`${prefix}noInitials`]: data.noInitials,
-      [`${prefix}initials`]: data.noInitials
-        ? null
-        : data.initials.toLocaleUpperCase("pl-PL"),
-      updatedAt: new Date(),
-    };
-
-    for (const [index, item] of items.entries()) {
-      const nextSize =
-        item.productId === "tracksuit" ? data.tracksuitSize
-          : item.productId === "pants" ? data.pantsSize
-          : item.productId === "sweatshirt" ? data.sweatshirtSize
-          : item.productId === "jacket" ? data.jacketSize
-          : item.productId === "jacket_basic" ? data.basicJacketSize
-          : undefined;
-
-      if (!nextSize) {
-        return NextResponse.json(
-          { error: "Brakuje rozmiaru zamówionego produktu." },
-          { status: 400 },
+      if (!player || player.deletedAt)
+        throw new NumberingError("Nie znaleziono zawodnika.", 404);
+      if (player.approvedAt)
+        throw new NumberingError(
+          "Zatwierdzony zawodnik jest zablokowany przed edycją.",
         );
+      if (!player.items?.length)
+        throw new NumberingError("Zawodnik nie ma produktów do edycji.");
+
+      const prefix = family ? `players.${data.playerIndex}.` : "";
+      const fields: Record<string, string | number | Date> = {
+        [`${prefix}playerName`]: data.playerName,
+        [`${prefix}group`]: data.group,
+        updatedAt: new Date(),
+      };
+      for (const [index, item] of player.items.entries()) {
+        const size =
+          item.productId === "tracksuit"
+            ? data.tracksuitSize
+            : item.productId === "pants"
+              ? data.pantsSize
+              : item.productId === "sweatshirt"
+                ? data.sweatshirtSize
+                : item.productId === "jacket"
+                  ? data.jacketSize
+                  : item.productId === "jacket_basic"
+                    ? data.basicJacketSize
+                    : undefined;
+        if (!size)
+          throw new NumberingError(
+            "Brakuje rozmiaru zamówionego produktu.",
+            400,
+          );
+        fields[`${prefix}items.${index}.size`] = size;
       }
-
-      fields[`${prefix}items.${index}.size`] = nextSize;
-    }
-
-    const filter: Document = isFamilyOrder
-      ? {
+      let number = typeof player.number === "number" ? player.number : null;
+      const oldCategory = getCategory(player.group);
+      const newCategory = getCategory(data.group);
+      if (!newCategory)
+        throw new NumberingError(
+          "Nieznana kategoria grupy. Wybierz poprawną grupę.",
+          400,
+        );
+      if (number !== null && oldCategory?.from !== newCategory.from) {
+        // Najpierw nowa rezerwacja, później zwolnienie starej.
+        const allocated = await allocateNumber(
+          db,
+          mongoSession,
+          data.group,
+          data.orderId,
+          data.playerIndex,
+        );
+        await releaseNumber(
+          db,
+          mongoSession,
+          number,
+          data.orderId,
+          data.playerIndex,
+        );
+        number = allocated;
+        fields[`${prefix}number`] = allocated;
+      }
+      // Historyczny wpis bez numeru pozostaje bez numeru do czasu
+      // świadomego uruchomienia przydziału w panelu trenera.
+      const result = await collection.updateOne(
+        {
           _id,
-          [`players.${data.playerIndex}`]: { $exists: true },
-          [`players.${data.playerIndex}.deletedAt`]: {
-            $exists: false,
-          },
-        }
-      : {
-          _id,
-          players: { $exists: false },
-          playerName: { $type: "string" },
-          deletedAt: { $exists: false },
-        };
-
-    const result = await collection.updateOne(filter, {
-      $set: fields,
+          [`${prefix}approvedAt`]: { $exists: false },
+          [`${prefix}deletedAt`]: { $exists: false },
+        },
+        { $set: fields },
+        { session: mongoSession },
+      );
+      if (result.matchedCount !== 1)
+        throw new NumberingError(
+          "Zgłoszenie zostało zmienione. Odśwież panel.",
+        );
+      return number;
     });
 
-    if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: "Zgłoszenie zostało zmienione. Odśwież panel." },
-        { status: 409 },
-      );
-    }
-
     return NextResponse.json(
-      { success: true },
+      { success: true, number: nextNumber },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
+    if (error instanceof NumberingError)
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     console.error("Błąd edycji zawodnika:", error);
-
     return NextResponse.json(
       { error: "Nie udało się zapisać zmian." },
       { status: 500 },
