@@ -1,10 +1,18 @@
 "use client";
 import { ORDER_SIZES } from "@/lib/sizes";
 import { useMemo, useState } from "react";
-import { ClipboardList, Download, Shirt, Search, Users } from "lucide-react";
+import {
+  Download,
+  Search,
+  Users,
+  Package,
+  Layers3,
+  Wallet,
+  HandCoins,
+} from "lucide-react";
 import PlayersTable from "@/components/admin/PlayersTable";
 import type { AdminOrderRow } from "@/lib/admin-orders";
-import { PRODUCT_IDS, PRODUCTS, PACKAGES, formatPrice } from "@/lib/products";
+import { PRODUCT_IDS, PRODUCTS, formatPrice } from "@/lib/products";
 import PlayerDeleteDialog from "@/components/admin/PlayerDeleteDialog";
 import PlayerEditDialog, {
   type PlayerEditUpdate,
@@ -82,15 +90,44 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
 
   const playerCount = new Set(filteredRows.map((row) => row.playerKey)).size;
 
-  const uniquePlayers = [...new Map(filteredRows.map((row) => [row.playerKey, row])).values()];
-  const pricedTotal = filteredRows.reduce(
-    (sum, row) => sum + (row.packageId ? 0 : (row.unitPrice ?? 0) * row.quantity), 0,
-  ) + uniquePlayers.reduce((sum, row) => sum + (row.packageId ? (row.packagePrice ?? 0) : 0), 0);
-  const missingPrices = filteredRows.some(
-    (row) => row.packageId ? row.packagePrice === null : row.unitPrice === null,
+  const uniquePlayers = [
+    ...new Map(filteredRows.map((row) => [row.playerKey, row])).values(),
+  ];
+  const pricedTotal =
+    filteredRows.reduce(
+      (sum, row) =>
+        sum + (row.packageId ? 0 : (row.unitPrice ?? 0) * row.quantity),
+      0,
+    ) +
+    uniquePlayers.reduce(
+      (sum, row) => sum + (row.packageId ? (row.packagePrice ?? 0) : 0),
+      0,
+    );
+  const missingPrices = filteredRows.some((row) =>
+    row.packageId ? row.packagePrice === null : row.unitPrice === null,
   );
-  const packageOneCount = uniquePlayers.filter((row) => row.packageId === "package_1").length;
-  const packageTwoCount = uniquePlayers.filter((row) => row.packageId === "package_2").length;
+  const packageOneCount = uniquePlayers.filter(
+    (row) => row.packageId === "package_1",
+  ).length;
+  const packageTwoCount = uniquePlayers.filter(
+    (row) => row.packageId === "package_2",
+  ).length;
+
+  const unpaidTotal =
+    filteredRows.reduce((sum, row) => {
+      if (row.packageId || row.paymentStatus === "paid") {
+        return sum;
+      }
+
+      return sum + (row.unitPrice ?? 0) * row.quantity;
+    }, 0) +
+    uniquePlayers.reduce((sum, row) => {
+      if (!row.packageId || row.paymentStatus === "paid") {
+        return sum;
+      }
+
+      return sum + (row.packagePrice ?? 0);
+    }, 0);
 
   const sizeTotals = useMemo(() => {
     const totals = new Map<
@@ -144,11 +181,15 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
         }
 
         const size =
-          row.productId === "tracksuit" ? (update.tracksuitSize ?? row.size)
-            : row.productId === "pants" ? (update.pantsSize ?? row.size)
-            : row.productId === "sweatshirt" ? (update.sweatshirtSize ?? row.size)
-            : row.productId === "jacket" ? (update.jacketSize ?? row.size)
-            : (update.basicJacketSize ?? row.size);
+          row.productId === "tracksuit"
+            ? (update.tracksuitSize ?? row.size)
+            : row.productId === "pants"
+              ? (update.pantsSize ?? row.size)
+              : row.productId === "sweatshirt"
+                ? (update.sweatshirtSize ?? row.size)
+                : row.productId === "jacket"
+                  ? (update.jacketSize ?? row.size)
+                  : (update.basicJacketSize ?? row.size);
 
         return {
           ...row,
@@ -241,20 +282,47 @@ export default function OrdersDashboard({ ordersCount, rows }: Props) {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
-          {label: "Zawodnicy", value: playerCount, icon: Users},
-          {label: PACKAGES.package_1.label, value: packageOneCount, icon: Shirt},
-          {label: PACKAGES.package_2.label, value: packageTwoCount, icon: ClipboardList},
-          {label: "Zgłoszone elementy", value: filteredRows.reduce((n,row) => n + row.quantity, 0), icon: ClipboardList},
-          {label: "Wartość zamówień (zł)", value: pricedTotal, icon: ClipboardList},
-        ].map(({ label, value, icon: Icon }) => (
+          {
+            label: "Zawodnicy",
+            value: playerCount,
+            icon: Users,
+            money: false,
+          },
+          {
+            label: "Pakiet I",
+            value: packageOneCount,
+            icon: Package,
+            money: false,
+          },
+          {
+            label: "Pakiet II",
+            value: packageTwoCount,
+            icon: Layers3,
+            money: false,
+          },
+          {
+            label: "Wartość zamówień",
+            value: pricedTotal,
+            icon: Wallet,
+            money: true,
+          },
+          {
+            label: "Pozostało do zapłaty",
+            value: unpaidTotal,
+            icon: HandCoins,
+            money: true,
+          },
+        ].map(({ label, value, icon: Icon, money }) => (
           <div
             key={label}
             className="bg-club-surface rounded-2xl border border-white/10 p-6"
           >
-            <Icon size={22} className="text-club-accent" />
+            <Icon size={22} strokeWidth={1.8} className="text-club-accent" />
+
             <p className="mt-5 text-3xl font-black">
-              {label === "Wartość zamówień (zł)" ? formatPrice(value) : value}
+              {money ? formatPrice(value) : value}
             </p>
+
             <p className="mt-2 text-sm text-white/50">{label}</p>
           </div>
         ))}
