@@ -245,16 +245,62 @@ export default function OrderForm({
     setSaveError("");
 
     try {
+      const requestBody = JSON.stringify({
+        parentName: parentName.trim(),
+        phone: phone.trim(),
+        players: orderPlayers,
+      });
+
+      // W pamięci sesji przechowujemy wyłącznie hash danych
+      // oraz losowy identyfikator, nie dane osobowe.
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(requestBody),
+      );
+
+      const fingerprint = Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
+
+      const storageKey = "dresy-pending-order-v1";
+      const previous = sessionStorage.getItem(storageKey);
+
+      let idempotencyKey = crypto.randomUUID();
+
+      if (previous) {
+        try {
+          const saved = JSON.parse(previous) as {
+            fingerprint?: string;
+            key?: string;
+          };
+
+          if (
+            saved.fingerprint === fingerprint &&
+            saved.key &&
+            /^[0-9a-f-]{36}$/i.test(saved.key)
+          ) {
+            idempotencyKey = saved.key;
+          }
+        } catch {
+          // Nieprawidłowy poprzedni wpis zostanie zastąpiony.
+        }
+      }
+
+      sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          fingerprint,
+          key: idempotencyKey,
+        }),
+      );
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
         },
-        body: JSON.stringify({
-          parentName: parentName.trim(),
-          phone: phone.trim(),
-          players: orderPlayers,
-        }),
+        body: requestBody,
       });
 
       const data = (await response.json()) as {
@@ -273,6 +319,7 @@ export default function OrderForm({
         reference: data.reference,
         totalPrice: data.totalPrice ?? orderTotal,
       });
+      sessionStorage.removeItem("dresy-pending-order-v1");
     } catch (error) {
       setSaveError(
         error instanceof Error
